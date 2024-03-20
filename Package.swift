@@ -1,0 +1,58 @@
+// swift-tools-version: 5.7
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
+import PackageDescription
+
+let package = Package(
+    name: "BreezeLambdaDynamoDBAPI",
+    platforms: [
+        .macOS(.v13),
+    ],
+    products: [
+        .library(
+            name: "BreezeDynamoDBService",
+            targets: ["BreezeDynamoDBService"]
+        ),
+        .library(
+            name: "BreezeLambdaAPI",
+            targets: ["BreezeLambdaAPI"]
+        )
+    ],
+    dependencies: [
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", from: "1.0.0-alpha.1"),
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", from: "0.1.0"),
+        .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
+        .package(url: "https://github.com/swift-serverless/swift-sls-adapter", from: "0.2.1"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.11.2"),
+    ],
+    targets: [
+        .target(
+            name: "BreezeDynamoDBService",
+            dependencies: [
+                .product(name: "SotoDynamoDB", package: "soto"),
+                .product(name: "Logging", package: "swift-log")
+            ]
+        ),
+        .target(
+            name: "BreezeLambdaAPI",
+            dependencies: [
+                .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
+                .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
+                "BreezeDynamoDBService"
+            ]
+        ),
+        .testTarget(
+            name: "BreezeLambdaAPITests",
+            dependencies: [
+                .product(name: "AWSLambdaTesting", package: "swift-aws-lambda-runtime"),
+                "BreezeLambdaAPI"
+            ],
+            resources: [.copy("Fixtures")]
+        ),
+        .testTarget(
+            name: "BreezeDynamoDBServiceTests",
+            dependencies: ["BreezeDynamoDBService"]
+        )
+    ]
+)
