@@ -1,15 +1,15 @@
-# BreezeLamdaDynamoDBAPI
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fswift-serverless%2FBreeze%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/swift-serverless/BreezeLamdaDynamoDBAPI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fswift-serverless%2FBreezeLamdaDynamoDBAPI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/swift-serverless/BreezeLamdaDynamoDBAPI) ![Breeze CI](https://github.com/swift-serverless/BreezeLamdaDynamoDBAPI/actions/workflows/swift-test.yml/badge.svg) [![codecov](https://codecov.io/gh/swift-serverless/BreezeLamdaDynamoDBAPI/branch/main/graph/badge.svg?token=PJR7YGBSQ0)](https://codecov.io/gh/swift-serverless/BreezeLamdaDynamoDBAPI)
+# BreezeLambdaDynamoDBAPI
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fswift-serverless%2Fhttps://app.codecov.io/gh/swift-serverless/BreezeLambdaDynamoDBAPI%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/swift-serverless/BreezeLambdaDynamoDBAPI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fswift-serverless%2FBreezeLambdaDynamoDBAPI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/swift-serverless/BreezeLambdaDynamoDBAPI) ![Breeze CI](https://github.com/swift-serverless/BreezeLambdaDynamoDBAPI/actions/workflows/swift-test.yml/badge.svg) [![codecov](https://codecov.io/gh/swift-serverless/BreezeLambdaDynamoDBAPI/branch/main/graph/badge.svg?token=PJR7YGBSQ0)](https://codecov.io/gh/swift-serverless/BreezeLambdaDynamoDBAPI)
 
-[![security status](https://www.meterian.io/badge/gh/swift-serverless/BreezeLamdaDynamoDBAPI/security?branch=main)](https://www.meterian.io/report/gh/swift-serverless/BreezeLamdaDynamoDBAPI)
-[![stability status](https://www.meterian.io/badge/gh/swift-serverless/BreezeLamdaDynamoDBAPI/stability?branch=main)](https://www.meterian.io/report/gh/swift-serverless/BreezeLamdaDynamoDBAPI)
-[![licensing status](https://www.meterian.io/badge/gh/swift-serverless/BreezeLamdaDynamoDBAPI/licensing?branch=main)](https://www.meterian.io/report/gh/swift-serverless/BreezeLamdaDynamoDBAPI)
+[![security status](https://www.meterian.io/badge/gh/swift-serverless/BreezeLambdaDynamoDBAPI/security?branch=main)](https://www.meterian.io/report/gh/swift-serverless/BreezeLambdaDynamoDBAPI)
+[![stability status](https://www.meterian.io/badge/gh/swift-serverless/BreezeLambdaDynamoDBAPI/stability?branch=main)](https://www.meterian.io/report/gh/swift-serverless/BreezeLambdaDynamoDBAPI)
+[![licensing status](https://www.meterian.io/badge/gh/swift-serverless/BreezeLambdaDynamoDBAPI/licensing?branch=main)](https://www.meterian.io/report/gh/swift-serverless/BreezeLambdaDynamoDBAPI)
 
 ![Breeze](logo.png)
 
 ## Usage
 
-Add the dependency `BreezeLamdaDynamoDBAPI` to a package:
+Add the dependency `BreezeLambdaDynamoDBAPI` to a package:
 
 ```swift
 // swift-tools-version:5.7
