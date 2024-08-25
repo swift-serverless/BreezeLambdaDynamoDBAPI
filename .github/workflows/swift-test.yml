@@ -41,11 +41,9 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true && apt-get -q update && apt-get -q install -y make curl wget
       - name: Test
         run: |
-          cd $GITHUB_WORKSPACE/src
           make test
       - name: Coverage
         run: |
-          cd $GITHUB_WORKSPACE/src
           make coverage
       - name: Upload Code Coverage 
         uses: codecov/codecov-action@v3
