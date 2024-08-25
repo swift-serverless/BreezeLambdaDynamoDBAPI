@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         image:
-          - swift:5.7.3-amazonlinux2
+          - swift:5.10.1-amazonlinux2
     services:
       localstack:
         image: localstack/localstack
@@ -33,11 +33,14 @@ jobs:
 
     steps:
       # Checkout the repository to the GitHub Actions runner
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup 
-        run:  |
-          yum -y update && yum -y install git make curl
+      - name: Setup
+        run: |
+          yum -y update && yum -y install git make zip curl
+      - name: Git Clone & Checkout
+        run: |
+          git clone https://github.com/$GITHUB_REPOSITORY.git $GITHUB_WORKSPACE/src
+          echo https://github.com/$GITHUB_REPOSITORY.git $BRANCH_NAME
+          cd $GITHUB_WORKSPACE/src && git checkout $BRANCH_NAME
       - name: Test
         run: |
           make test
