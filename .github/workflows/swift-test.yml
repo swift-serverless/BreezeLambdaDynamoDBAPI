@@ -45,9 +45,11 @@ jobs:
           git checkout $BRANCH_NAME
       - name: Test
         run: |
+          cd $GITHUB_WORKSPACE/src
           make test
       - name: Coverage
         run: |
+          cd $GITHUB_WORKSPACE/src
           make coverage
       - name: Upload Code Coverage 
         uses: codecov/codecov-action@v3
