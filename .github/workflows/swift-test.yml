@@ -26,6 +26,7 @@ jobs:
       image: ${{ matrix.image }}
       env:
         LOCALSTACK_ENDPOINT : "http://localstack:4566"
+        BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
      # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
@@ -40,7 +41,8 @@ jobs:
         run: |
           git clone https://github.com/$GITHUB_REPOSITORY.git $GITHUB_WORKSPACE/src
           echo https://github.com/$GITHUB_REPOSITORY.git $BRANCH_NAME
-          cd $GITHUB_WORKSPACE/src && git checkout $BRANCH_NAME
+          cd $GITHUB_WORKSPACE/src
+          git checkout $BRANCH_NAME
       - name: Test
         run: |
           make test
