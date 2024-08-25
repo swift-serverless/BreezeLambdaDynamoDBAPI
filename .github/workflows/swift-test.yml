@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         image:
-          - swift:5.10.1-amazonlinux2
+          - swift:5.10.1
     services:
       localstack:
         image: localstack/localstack
@@ -27,7 +27,6 @@ jobs:
       env:
         LOCALSTACK_ENDPOINT : "http://localstack:4566"
         BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-        GITHUB_ACTIONS_RUNNER_FORCED_NODE_VERSION: node16
      # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
@@ -35,11 +34,11 @@ jobs:
 
     steps:
       # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Setup
         run: |
-          yum -y update && yum -y install git make zip curl
-      - name: Checkout
-        uses: actions/checkout@v3
+          yum -y update && yum -y install make zip
       - name: Test
         run: |
           cd $GITHUB_WORKSPACE/src
