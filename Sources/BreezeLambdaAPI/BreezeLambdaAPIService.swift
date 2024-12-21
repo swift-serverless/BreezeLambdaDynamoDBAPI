@@ -50,6 +50,14 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
         return tableName
     }
     
+    static func endpoint() -> String? {
+        if let localstack = Lambda.env("LOCALSTACK_ENDPOINT"),
+           !localstack.isEmpty {
+            return localstack
+        }
+        return nil
+    }
+    
     public init(dbTimeout: Int64 = 30) throws {
         self.timeout = .seconds(dbTimeout)
         self.httpClientService = BreezeHTTPClientService(
@@ -61,6 +69,7 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
             region: Self.currentRegion(),
             tableName: try Self.tableName(),
             keyName: try Self.keyName(),
+            endpoint: Self.endpoint(),
             logger: logger
         )
         self.dynamoDBService = BreezeDynamoDBService(with: config)
@@ -92,5 +101,7 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
     
     public func run() async throws {
         try await serviceGroup.run()
+        
+        try await gracefulShutdown()
     }
 }

@@ -17,6 +17,7 @@ import AsyncHTTPClient
 import NIOCore
 import BreezeDynamoDBService
 import AWSLambdaRuntime
+import AWSLambdaEvents
 
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
@@ -25,12 +26,18 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
     init(dynamoDBService: BreezeDynamoDBService) {
         self.dynamoDBService = dynamoDBService
     }
-
+    
+    var breezeApi: BreezeLambdaAPIHandler<T>?
+    
+    func handler(event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
+        guard let breezeApi else { throw BreezeLambdaAPIError.invalidHandler }
+        return try await breezeApi.handle(event, context: context)
+    }
+    
     func run() async throws {
         let breezeApi = try await BreezeLambdaAPIHandler<T>(service: dynamoDBService)
-        let runtime = LambdaRuntime { event, context in
-            try await breezeApi.handle(event, context: context)
-        }
+        self.breezeApi = breezeApi
+        let runtime = LambdaRuntime(body: handler)
         try await runtime.run()
     }
 }

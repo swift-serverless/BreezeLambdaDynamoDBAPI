@@ -29,8 +29,7 @@ final class BreezeLambdaAPITests: XCTestCase {
         setEnvironmentVar(name: "AWS_REGION", value: "eu-west-1", overwrite: true)
         setEnvironmentVar(name: "DYNAMO_DB_TABLE_NAME", value: "product-table", overwrite: true)
         setEnvironmentVar(name: "DYNAMO_DB_KEY", value: "sku", overwrite: true)
-        LambdaInitializationContext.DynamoDB.Service = BreezeDynamoDBServiceMock.self
-        LambdaInitializationContext.DynamoDB.dbTimeout = 1
+        BreezeDynamoDBService.DynamoDB.Service = BreezeDynamoDBServiceMock.self
     }
 
     override func tearDownWithError() throws {
@@ -39,8 +38,8 @@ final class BreezeLambdaAPITests: XCTestCase {
         unsetenv("DYNAMO_DB_TABLE_NAME")
         unsetenv("DYNAMO_DB_KEY")
         unsetenv("_HANDLER")
-        LambdaInitializationContext.DynamoDB.Service = BreezeDynamoDBManager.self
-        LambdaInitializationContext.DynamoDB.dbTimeout = 30
+        BreezeDynamoDBService.DynamoDB.Service = BreezeDynamoDBManager.self
+//        BreezeDynamoDBService.DynamoDB.dbTimeout = 30
         BreezeDynamoDBServiceMock.reset()
         try super.tearDownWithError()
     }

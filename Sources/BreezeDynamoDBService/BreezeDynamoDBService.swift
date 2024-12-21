@@ -19,7 +19,7 @@ import Logging
 
 public extension BreezeDynamoDBService {
     enum DynamoDB {
-        public static let Service: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
+        nonisolated(unsafe) public static var Service: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
     }
 }
 
@@ -31,19 +31,27 @@ public actor BreezeDynamoDBService: Service {
         let region: Region
         let tableName: String
         let keyName: String
+        let endpoint: String?
         let logger: Logger
         
-        public init(httpClientService: BreezeHTTPClientService, region: Region, tableName: String, keyName: String, logger: Logger) {
+        public init(
+            httpClientService: BreezeHTTPClientService,
+            region: Region,
+            tableName: String,
+            keyName: String,
+            endpoint: String?,
+            logger: Logger
+        ) {
             self.httpClientService = httpClientService
             self.region = region
             self.tableName = tableName
             self.keyName = keyName
+            self.endpoint = endpoint
             self.logger = logger
         }
     }
 
     public var dbManager: BreezeDynamoDBManaging?
-    private var awsClient: AWSClient?
     private let config: Config
     
     public init(with config: Config) {
@@ -53,8 +61,8 @@ public actor BreezeDynamoDBService: Service {
     public func run() async throws {
         config.logger.info("Starting DynamoDBService...")
         let httpClient = await config.httpClientService.httpClient
-        let awsClient = AWSClient(httpClientProvider: .shared(httpClient))
-        let db = SotoDynamoDB.DynamoDB(client: awsClient, region: config.region)
+        let awsClient = AWSClient(httpClient: httpClient)
+        let db = SotoDynamoDB.DynamoDB(client: awsClient, region: config.region, endpoint: config.endpoint)
         
         self.dbManager = DynamoDB.Service.init(
             db: db,
@@ -69,7 +77,7 @@ public actor BreezeDynamoDBService: Service {
         try await gracefulShutdown()
         
         config.logger.info("Shutting down DynamoDBService...")
-        try self.awsClient?.syncShutdown()
+        try await awsClient.shutdown()
     }
 }
 

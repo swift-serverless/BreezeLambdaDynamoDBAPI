@@ -1,13 +1,16 @@
 // swift-tools-version: 6.0
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
+#if os(macOS)
+let platforms: [PackageDescription.SupportedPlatform]? = [.macOS(.v15)]
+#else
+let platforms: [PackageDescription.SupportedPlatform]? = nil
+#endif
+
 let package = Package(
     name: "BreezeLambdaDynamoDBAPI",
-    platforms: [
-        .macOS(.v15),
-    ],
+    platforms: platforms,
     products: [
         .library(
             name: "BreezeDynamoDBService",
@@ -30,9 +33,9 @@ let package = Package(
         .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", branch: "main"),
         .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", branch: "main"),
         .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
-        .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.22.0"),
+        .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.2"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.24.0"),
     ],
     targets: [
         .executableTarget(

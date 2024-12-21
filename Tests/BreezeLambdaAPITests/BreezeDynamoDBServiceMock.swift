@@ -16,11 +16,13 @@ import BreezeDynamoDBService
 @testable import BreezeLambdaAPI
 import SotoDynamoDB
 
+
+
 struct BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
     var keyName: String
 
-    static var response: (any BreezeCodable)?
-    static var keyedResponse: (any BreezeCodable)?
+    nonisolated(unsafe) static var response: (any BreezeCodable)?
+    nonisolated(unsafe) static var keyedResponse: (any BreezeCodable)?
 
     init(db: SotoDynamoDB.DynamoDB, tableName: String, keyName: String) {
         self.keyName = keyName
@@ -62,8 +64,8 @@ struct BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
         return
     }
 
-    static var limit: Int?
-    static var exclusiveKey: String?
+    nonisolated(unsafe) static var limit: Int?
+    nonisolated(unsafe) static var exclusiveKey: String?
     func listItems<T: BreezeCodable>(key: String?, limit: Int?) async throws -> ListResponse<T> {
         guard let response = Self.response as? T else {
             throw BreezeLambdaAPIError.invalidItem

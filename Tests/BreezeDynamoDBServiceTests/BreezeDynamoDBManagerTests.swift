@@ -25,11 +25,11 @@ struct Product: BreezeCodable {
     var updatedAt: String?
 }
 
-final class BreezeDynamoDBServiceTests: XCTestCase {
+final class BreezeDynamoDBManagerTests: XCTestCase {
     
     let tableName = "Breeze"
     let keyName = "key"
-    var sut: BreezeDynamoDBService!
+    var sut: BreezeDynamoDBManager!
     
     let product2023 = Product(key: "2023", name: "Swift Serverless API 2022", description: "Test")
     let product2022 = Product(key: "2022", name: "Swift Serverless API with async/await! 🚀🥳", description: "BreezeLambaAPI is magic 🪄!")
@@ -38,7 +38,7 @@ final class BreezeDynamoDBServiceTests: XCTestCase {
         try await super.setUp()
         try await LocalStackDynamoDB.createTable(name: tableName, keyName: keyName)
         let db = LocalStackDynamoDB.dynamoDB
-        sut = BreezeDynamoDBService(db: db, tableName: tableName, keyName: keyName)
+        sut = BreezeDynamoDBManager(db: db, tableName: tableName, keyName: keyName)
     }
 
     override func tearDown() async throws {

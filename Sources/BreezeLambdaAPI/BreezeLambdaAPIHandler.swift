@@ -20,9 +20,6 @@ import Foundation
 import SotoDynamoDB
 
 public struct BreezeLambdaAPIHandler<T: BreezeCodable>: LambdaHandler, Sendable {
-    public typealias Event = APIGatewayV2Request
-    public typealias Output = APIGatewayV2Response
-
     let service: BreezeDynamoDBService
 
     public init(service: BreezeDynamoDBService) async throws {
@@ -38,7 +35,7 @@ public struct BreezeLambdaAPIHandler<T: BreezeCodable>: LambdaHandler, Sendable 
         return operation
     }
 
-    public func handle(_ event: AWSLambdaEvents.APIGatewayV2Request, context: AWSLambdaRuntimeCore.LambdaContext) async throws -> AWSLambdaEvents.APIGatewayV2Response {
+    public func handle(_ event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
         let operation = try Self.operation()
         context.logger.info("operation: \(operation)")
         guard let service = await service.dbManager else {
