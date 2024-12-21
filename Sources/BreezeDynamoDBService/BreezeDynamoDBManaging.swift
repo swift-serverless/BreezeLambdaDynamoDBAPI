@@ -14,7 +14,7 @@
 
 import SotoDynamoDB
 
-public protocol BreezeDynamoDBServing {
+public protocol BreezeDynamoDBManaging: Sendable {
     var keyName: String { get }
     init(db: DynamoDB, tableName: String, keyName: String)
     func createItem<Item: BreezeCodable>(item: Item) async throws -> Item

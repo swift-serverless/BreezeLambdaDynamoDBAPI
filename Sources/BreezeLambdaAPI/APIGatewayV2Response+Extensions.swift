@@ -21,7 +21,7 @@ extension APIGatewayV2Response {
     
     /// defaultHeaders
     /// Override the headers in APIGatewayV2Response
-    static var defaultHeaders = [ "Content-Type": "application/json" ]
+    static let defaultHeaders = [ "Content-Type": "application/json" ]
 
     struct BodyError: Codable {
         let error: String

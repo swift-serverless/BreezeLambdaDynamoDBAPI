@@ -12,112 +12,64 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-import struct Foundation.Date
-import NIO
 import SotoDynamoDB
-
-public class BreezeDynamoDBService: BreezeDynamoDBServing {
-    enum ServiceError: Error {
-        case notFound
-        case missingParameters
-    }
-
-    let db: DynamoDB
-    public let keyName: String
-    let tableName: String
-
-    public required init(db: DynamoDB, tableName: String, keyName: String) {
-        self.db = db
-        self.tableName = tableName
-        self.keyName = keyName
-    }
-}
+import ServiceLifecycle
+import BreezeHTTPClientService
+import Logging
 
 public extension BreezeDynamoDBService {
-    func createItem<T: BreezeCodable>(item: T) async throws -> T {
-        var item = item
-        let date = Date()
-        item.createdAt = date.iso8601
-        item.updatedAt = date.iso8601
-        let input = DynamoDB.PutItemCodableInput(
-            conditionExpression: "attribute_not_exists(#keyName)",
-            expressionAttributeNames: ["#keyName": keyName],
-            item: item,
-            tableName: tableName
-        )
-        let _ = try await db.putItem(input)
-        return try await readItem(key: item.key)
-    }
-
-    func readItem<T: BreezeCodable>(key: String) async throws -> T {
-        let input = DynamoDB.GetItemInput(
-            key: [keyName: DynamoDB.AttributeValue.s(key)],
-            tableName: tableName
-        )
-        let data = try await db.getItem(input, type: T.self)
-        guard let item = data.item else {
-            throw ServiceError.notFound
-        }
-        return item
-    }
-
-    private struct AdditionalAttributes: Encodable {
-        let oldUpdatedAt: String
-    }
-    
-    func updateItem<T: BreezeCodable>(item: T) async throws -> T {
-        var item = item
-        let oldUpdatedAt = item.updatedAt ?? ""
-        let date = Date()
-        item.updatedAt = date.iso8601
-        let attributes = AdditionalAttributes(oldUpdatedAt: oldUpdatedAt)
-        let input = try DynamoDB.UpdateItemCodableInput(
-            additionalAttributes: attributes,
-            conditionExpression: "attribute_exists(#\(keyName)) AND #updatedAt = :oldUpdatedAt AND #createdAt = :createdAt",
-            key: [keyName],
-            tableName: tableName,
-            updateItem: item
-        )
-        let _ = try await db.updateItem(input)
-        return try await readItem(key: item.key)
-    }
-
-    func deleteItem<T: BreezeCodable>(item: T) async throws {
-        guard let updatedAt = item.updatedAt,
-              let createdAt = item.createdAt else {
-            throw ServiceError.missingParameters
-        }
-        
-        let input = DynamoDB.DeleteItemInput(
-            conditionExpression: "#updatedAt = :updatedAt AND #createdAt = :createdAt",
-            expressionAttributeNames: ["#updatedAt": "updatedAt",
-                                       "#createdAt" : "createdAt"],
-            expressionAttributeValues: [":updatedAt": .s(updatedAt),
-                                        ":createdAt" : .s(createdAt)],
-            key: [keyName: DynamoDB.AttributeValue.s(item.key)],
-            tableName: tableName
-        )
-        let _ = try await db.deleteItem(input)
-        return
-    }
-
-    func listItems<T: BreezeCodable>(key: String?, limit: Int?) async throws -> ListResponse<T> {
-        var exclusiveStartKey: [String: DynamoDB.AttributeValue]?
-        if let key {
-            exclusiveStartKey = [keyName: DynamoDB.AttributeValue.s(key)]
-        }
-        let input = DynamoDB.ScanInput(
-            exclusiveStartKey: exclusiveStartKey,
-            limit: limit,
-            tableName: tableName
-        )
-        let data = try await db.scan(input, type: T.self)
-        if let lastEvaluatedKeyShape = data.lastEvaluatedKey?[keyName],
-           case .s(let lastEvaluatedKey) = lastEvaluatedKeyShape
-        {
-            return ListResponse(items: data.items ?? [], lastEvaluatedKey: lastEvaluatedKey)
-        } else {
-            return ListResponse(items: data.items ?? [], lastEvaluatedKey: nil)
-        }
+    enum DynamoDB {
+        public static let Service: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
     }
 }
+
+public actor BreezeDynamoDBService: Service {
+    
+    public struct Config: Sendable {
+        
+        let httpClientService: BreezeHTTPClientService
+        let region: Region
+        let tableName: String
+        let keyName: String
+        let logger: Logger
+        
+        public init(httpClientService: BreezeHTTPClientService, region: Region, tableName: String, keyName: String, logger: Logger) {
+            self.httpClientService = httpClientService
+            self.region = region
+            self.tableName = tableName
+            self.keyName = keyName
+            self.logger = logger
+        }
+    }
+
+    public var dbManager: BreezeDynamoDBManaging?
+    private var awsClient: AWSClient?
+    private let config: Config
+    
+    public init(with config: Config) {
+        self.config = config
+    }
+    
+    public func run() async throws {
+        config.logger.info("Starting DynamoDBService...")
+        let httpClient = await config.httpClientService.httpClient
+        let awsClient = AWSClient(httpClientProvider: .shared(httpClient))
+        let db = SotoDynamoDB.DynamoDB(client: awsClient, region: config.region)
+        
+        self.dbManager = DynamoDB.Service.init(
+            db: db,
+            tableName: config.tableName,
+            keyName: config.keyName
+        )
+        config.logger.info("DynamoDBService config...")
+        config.logger.info("region: \(config.region)")
+        config.logger.info("tableName: \(config.tableName)")
+        config.logger.info("keyName: \(config.keyName)")
+        
+        try await gracefulShutdown()
+        
+        config.logger.info("Shutting down DynamoDBService...")
+        try self.awsClient?.syncShutdown()
+    }
+}
+

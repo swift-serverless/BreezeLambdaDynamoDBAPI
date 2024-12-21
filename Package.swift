@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "BreezeLambdaDynamoDBAPI",
     platforms: [
-        .macOS(.v13),
+        .macOS(.v15),
     ],
     products: [
         .library(
@@ -14,24 +14,47 @@ let package = Package(
             targets: ["BreezeDynamoDBService"]
         ),
         .library(
+            name: "BreezeHTTPClientService",
+            targets: ["BreezeHTTPClientService"]
+        ),
+        .library(
             name: "BreezeLambdaAPI",
             targets: ["BreezeLambdaAPI"]
+        ),
+        .executable(
+            name: "BreezeDemoApplication",
+            targets: ["BreezeDemoApplication"]
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", from: "1.0.0-alpha.2"),
-        .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", from: "0.1.0"),
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", branch: "main"),
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", branch: "main"),
+        .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
-        .package(url: "https://github.com/swift-serverless/swift-sls-adapter", from: "0.2.1"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.11.2"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.22.0"),
     ],
     targets: [
+        .executableTarget(
+            name: "BreezeDemoApplication",
+            dependencies: [
+                "BreezeLambdaAPI"
+            ]
+        ),
+        .target(
+            name: "BreezeHTTPClientService",
+            dependencies: [
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "Logging", package: "swift-log")
+            ]
+        ),
         .target(
             name: "BreezeDynamoDBService",
             dependencies: [
                 .product(name: "SotoDynamoDB", package: "soto"),
-                .product(name: "Logging", package: "swift-log")
+                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
+                .product(name: "Logging", package: "swift-log"),
+                "BreezeHTTPClientService"
             ]
         ),
         .target(
@@ -39,6 +62,7 @@ let package = Package(
             dependencies: [
                 .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
                 .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
+                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
                 "BreezeDynamoDBService"
             ]
         ),

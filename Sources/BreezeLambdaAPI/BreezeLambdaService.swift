@@ -12,10 +12,25 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-import Foundation
+import ServiceLifecycle
+import AsyncHTTPClient
+import NIOCore
+import BreezeDynamoDBService
+import AWSLambdaRuntime
 
-public protocol BreezeCodable: Codable, Sendable {
-    var key: String { get set }
-    var createdAt: String? { get set }
-    var updatedAt: String? { get set }
+actor BreezeLambdaService<T: BreezeCodable>: Service {
+    
+    let dynamoDBService: BreezeDynamoDBService
+    
+    init(dynamoDBService: BreezeDynamoDBService) {
+        self.dynamoDBService = dynamoDBService
+    }
+
+    func run() async throws {
+        let breezeApi = try await BreezeLambdaAPIHandler<T>(service: dynamoDBService)
+        let runtime = LambdaRuntime { event, context in
+            try await breezeApi.handle(event, context: context)
+        }
+        try await runtime.run()
+    }
 }

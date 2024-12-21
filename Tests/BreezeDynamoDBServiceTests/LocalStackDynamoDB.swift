@@ -17,7 +17,7 @@ import Logging
 
 enum LocalStackDynamoDB {
     
-    static var endpoint: String = {
+    static let endpoint: String = {
         if let localstack = getEnvironmentVar(name: "LOCALSTACK_ENDPOINT"),
            !localstack.isEmpty {
             return localstack
@@ -25,7 +25,7 @@ enum LocalStackDynamoDB {
         return "http://localhost:4566"
     }()
 
-    public static var logger: Logger = {
+    public static let logger: Logger = {
         if let loggingLevel = getEnvironmentVar(name: "AWS_LOG_LEVEL") {
             if let logLevel = Logger.Level(rawValue: loggingLevel.lowercased()) {
                 var logger = Logger(label: "breeze")
@@ -36,13 +36,13 @@ enum LocalStackDynamoDB {
         return AWSClient.loggingDisabled
     }()
     
-    static var client = AWSClient(
+    static let client = AWSClient(
         credentialProvider: .static(accessKeyId: "breeze", secretAccessKey: "magic"),
         middlewares: [AWSLoggingMiddleware()],
         httpClientProvider: .createNew
     )
 
-    static var dynamoDB = DynamoDB(
+    static let dynamoDB = DynamoDB(
         client: client,
         region: .useast1,
         endpoint: endpoint

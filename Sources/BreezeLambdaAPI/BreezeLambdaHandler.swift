@@ -21,7 +21,7 @@ struct BreezeLambdaHandler<T: BreezeCodable> {
     typealias Event = APIGatewayV2Request
     typealias Output = APIGatewayV2Response
 
-    let service: BreezeDynamoDBServing
+    let service: BreezeDynamoDBManaging
     let operation: BreezeOperation
 
     var keyName: String {

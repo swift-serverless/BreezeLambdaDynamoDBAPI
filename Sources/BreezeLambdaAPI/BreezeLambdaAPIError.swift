@@ -20,4 +20,5 @@ enum BreezeLambdaAPIError: Error {
     case keyNameNotFound
     case invalidRequest
     case invalidHandler
+    case invalidService
 }
