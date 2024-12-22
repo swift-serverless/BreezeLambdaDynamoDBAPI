@@ -14,7 +14,12 @@
 
 import SotoCore
 import SotoDynamoDB
-import XCTest
+import Testing
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 @testable import BreezeDynamoDBService
 
 struct Product: BreezeCodable {
@@ -25,182 +30,229 @@ struct Product: BreezeCodable {
     var updatedAt: String?
 }
 
-final class BreezeDynamoDBManagerTests: XCTestCase {
+@Suite
+struct BreezeDynamoDBManagerTests {
     
-    let tableName = "Breeze"
     let keyName = "key"
-    var sut: BreezeDynamoDBManager!
     
     let product2023 = Product(key: "2023", name: "Swift Serverless API 2022", description: "Test")
     let product2022 = Product(key: "2022", name: "Swift Serverless API with async/await! 🚀🥳", description: "BreezeLambaAPI is magic 🪄!")
     
-    override func setUp() async throws {
-        try await super.setUp()
+    func givenTable(tableName: String) async throws -> BreezeDynamoDBManager {
         try await LocalStackDynamoDB.createTable(name: tableName, keyName: keyName)
         let db = LocalStackDynamoDB.dynamoDB
-        sut = BreezeDynamoDBManager(db: db, tableName: tableName, keyName: keyName)
+        return BreezeDynamoDBManager(db: db, tableName: tableName, keyName: keyName)
     }
-
-    override func tearDown() async throws {
-        sut = nil
+    
+    func removeTable(tableName: String) async throws {
         try await LocalStackDynamoDB.deleteTable(name: tableName)
-        try await super.tearDown()
     }
     
+    @Test
     func test_createItem() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         let value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, product2023.key)
-        XCTAssertEqual(value.name, product2023.name)
-        XCTAssertEqual(value.description, product2023.description)
-        XCTAssertNotNil(value.createdAt?.iso8601)
-        XCTAssertNotNil(value.updatedAt?.iso8601)
+        #expect(value.key == product2023.key)
+        #expect(value.name == product2023.name)
+        #expect(value.description == product2023.description)
+        try #require(value.createdAt?.iso8601 != nil)
+        try #require(value.updatedAt?.iso8601 != nil)
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_createItemDuplicate_shouldThrowConditionalCheckFailedException() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         let value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, product2023.key)
-        XCTAssertEqual(value.name, product2023.name)
-        XCTAssertEqual(value.description, product2023.description)
-        XCTAssertNotNil(value.createdAt?.iso8601)
-        XCTAssertNotNil(value.updatedAt?.iso8601)
+        #expect(value.key == product2023.key)
+        #expect(value.name == product2023.name)
+        #expect(value.description == product2023.description)
+        try #require(value.createdAt?.iso8601 != nil)
+        try #require(value.updatedAt?.iso8601 != nil)
         do {
             _ = try await sut.createItem(item: product2023)
-            XCTFail("It should throw conditionalCheckFailedException")
+            Issue.record("It should throw conditionalCheckFailedException")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_readItem() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         let cretedItem = try await sut.createItem(item: product2023)
         let readedItem: Product = try await sut.readItem(key: "2023")
-        XCTAssertEqual(cretedItem.key, readedItem.key)
-        XCTAssertEqual(cretedItem.name, readedItem.name)
-        XCTAssertEqual(cretedItem.description, readedItem.description)
-        XCTAssertEqual(cretedItem.createdAt?.iso8601, readedItem.createdAt?.iso8601)
-        XCTAssertEqual(cretedItem.updatedAt?.iso8601, readedItem.updatedAt?.iso8601)
+        #expect(cretedItem.key == readedItem.key)
+        #expect(cretedItem.name == readedItem.name)
+        #expect(cretedItem.description == readedItem.description)
+        #expect(cretedItem.createdAt?.iso8601 == readedItem.createdAt?.iso8601)
+        #expect(cretedItem.updatedAt?.iso8601 == readedItem.updatedAt?.iso8601)
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_readItem_whenItemIsMissing() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         let value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, "2023")
+        #expect(value.key == "2023")
         do {
             let _: Product = try await sut.readItem(key: "2022")
-            XCTFail("It should throw when Item is missing")
+            Issue.record("It should throw when Item is missing")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_updateItem() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         var value = try await sut.createItem(item: product2023)
         value.name = "New Name"
         value.description = "New Description"
         let newValue = try await sut.updateItem(item: value)
-        XCTAssertEqual(value.key, newValue.key)
-        XCTAssertEqual(value.name, newValue.name)
-        XCTAssertEqual(value.description, newValue.description)
-        XCTAssertEqual(value.createdAt?.iso8601, newValue.createdAt?.iso8601)
-        XCTAssertNotEqual(value.updatedAt?.iso8601, newValue.updatedAt?.iso8601)
+        #expect(value.key == newValue.key)
+        #expect(value.name == newValue.name)
+        #expect(value.description == newValue.description)
+        #expect(value.createdAt?.iso8601 == newValue.createdAt?.iso8601)
+        #expect(value.updatedAt?.iso8601 != newValue.updatedAt?.iso8601)
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_updateItem_whenItemHasChanged_shouldThrowConditionalCheckFailedException() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         var value = try await sut.createItem(item: product2023)
         value.name = "New Name"
         value.description = "New Description"
         let newValue = try await sut.updateItem(item: value)
-        XCTAssertEqual(value.key, newValue.key)
-        XCTAssertEqual(value.name, newValue.name)
-        XCTAssertEqual(value.description, newValue.description)
-        XCTAssertEqual(value.createdAt?.iso8601, newValue.createdAt?.iso8601)
-        XCTAssertNotEqual(value.updatedAt?.iso8601, newValue.updatedAt?.iso8601)
+        #expect(value.key == newValue.key)
+        #expect(value.name == newValue.name)
+        #expect(value.description == newValue.description)
+        #expect(value.createdAt?.iso8601 == newValue.createdAt?.iso8601)
+        #expect(value.updatedAt?.iso8601 != newValue.updatedAt?.iso8601)
         do {
             let _: Product = try await sut.updateItem(item: product2023)
-            XCTFail("It should throw conditionalCheckFailedException")
+            Issue.record("It should throw conditionalCheckFailedException")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
         
         do {
             let _: Product = try await sut.updateItem(item: product2022)
-            XCTFail("It should throw conditionalCheckFailedException")
+            Issue.record("It should throw conditionalCheckFailedException")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_deleteItem() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         let value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, "2023")
+        #expect(value.key == "2023")
         try await sut.deleteItem(item: value)
         let readedItem: Product? = try? await sut.readItem(key: "2023")
-        XCTAssertNil(readedItem)
+        #expect(readedItem == nil)
+        try await removeTable(tableName: uuid)
     }
     
     func test_deleteItem_whenItemIsMissing_thenShouldThrow() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         do {
             try await sut.deleteItem(item: product2022)
-            XCTFail("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw ServiceError.missingParameters")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_deleteItem_whenMissingUpdatedAt_thenShouldThrow() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         var value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, "2023")
+        #expect(value.key == "2023")
         value.updatedAt = nil
         do {
             try await sut.deleteItem(item: value)
-            XCTFail("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw ServiceError.missingParameters")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_deleteItem_whenMissingCreatedAt_thenShouldThrow() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         var value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, "2023")
+        #expect(value.key == "2023")
         value.createdAt = nil
         do {
             try await sut.deleteItem(item: value)
-            XCTFail("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw ServiceError.missingParameters")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_deleteItem_whenOutdatedUpdatedAt_thenShouldThrow() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         var value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, "2023")
+        #expect(value.key == "2023")
         value.updatedAt = Date().iso8601
         do {
             try await sut.deleteItem(item: value)
-            XCTFail("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw ServiceError.missingParameters")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_deleteItem_whenOutdatedCreatedAt_thenShouldThrow() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         var value = try await sut.createItem(item: product2023)
-        XCTAssertEqual(value.key, "2023")
+        #expect(value.key == "2023")
         value.createdAt = Date().iso8601
         do {
             try await sut.deleteItem(item: value)
-            XCTFail("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw ServiceError.missingParameters")
         } catch {
-            XCTAssertNotNil(error)
+            try #require(error != nil)
         }
+        try await removeTable(tableName: uuid)
     }
     
+    @Test
     func test_listItem() async throws {
+        let uuid = UUID().uuidString
+        let sut = try await givenTable(tableName: uuid)
         let value1 = try await sut.createItem(item: product2022)
         let value2 = try await sut.createItem(item: product2023)
         let list: ListResponse<Product> = try await sut.listItems(key: nil, limit: nil)
-        XCTAssertEqual(list.items.count, 2)
+        #expect(list.items.count == 2)
         let keys = Set(list.items.map { $0.key })
-        XCTAssertTrue(keys.contains(value1.key))
-        XCTAssertTrue(keys.contains(value2.key))
+        #expect(keys.contains(value1.key))
+        #expect(keys.contains(value2.key))
+        try await removeTable(tableName: uuid)
     }
 }

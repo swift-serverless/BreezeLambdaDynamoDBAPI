@@ -17,6 +17,10 @@ import AsyncHTTPClient
 import NIOCore
 import Logging
 
+public protocol BreezeHTTPClientServing: Service {
+    var httpClient: HTTPClient { get }
+}
+
 public actor BreezeHTTPClientService: Service {
     
     public let httpClient: HTTPClient
@@ -39,9 +43,12 @@ public actor BreezeHTTPClientService: Service {
 
     public func run() async throws {
         logger.info("HTTPClientService started...")
-        try? await gracefulShutdown()
+        try await gracefulShutdown()
         
         logger.info("Shutting down HTTPClientService...")
         try await httpClient.shutdown()
+        logger.info("HTTPClientService shutdown completed.")
     }
 }
+
+extension BreezeHTTPClientService: BreezeHTTPClientServing { }

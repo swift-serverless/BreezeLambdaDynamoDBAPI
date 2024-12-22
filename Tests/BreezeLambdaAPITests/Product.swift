@@ -13,7 +13,11 @@
 //    limitations under the License.
 
 import BreezeDynamoDBService
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 struct Product: BreezeCodable {
     var key: String

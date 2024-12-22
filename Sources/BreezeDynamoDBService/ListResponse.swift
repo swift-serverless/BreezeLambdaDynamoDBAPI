@@ -12,7 +12,11 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 public struct ListResponse<Item: Codable>: Codable {
     public init(items: [Item], lastEvaluatedKey: String? = nil) {

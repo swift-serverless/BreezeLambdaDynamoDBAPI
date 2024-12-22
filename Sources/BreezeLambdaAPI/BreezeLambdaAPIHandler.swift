@@ -16,8 +16,13 @@ import AsyncHTTPClient
 import AWSLambdaEvents
 import AWSLambdaRuntime
 import BreezeDynamoDBService
-import Foundation
 import SotoDynamoDB
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 public struct BreezeLambdaAPIHandler<T: BreezeCodable>: LambdaHandler, Sendable {
     let service: BreezeDynamoDBService

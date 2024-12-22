@@ -62,14 +62,18 @@ public actor BreezeDynamoDBService: Service {
         config.logger.info("Starting DynamoDBService...")
         let httpClient = await config.httpClientService.httpClient
         let awsClient = AWSClient(httpClient: httpClient)
-        let db = SotoDynamoDB.DynamoDB(client: awsClient, region: config.region, endpoint: config.endpoint)
-        
+        let db = SotoDynamoDB.DynamoDB(
+            client: awsClient,
+            region: config.region,
+            endpoint: config.endpoint
+        )
         self.dbManager = DynamoDB.Service.init(
             db: db,
             tableName: config.tableName,
             keyName: config.keyName
         )
-        config.logger.info("DynamoDBService config...")
+        
+        config.logger.info("DynamoDBService is running with config...")
         config.logger.info("region: \(config.region)")
         config.logger.info("tableName: \(config.tableName)")
         config.logger.info("keyName: \(config.keyName)")
@@ -78,6 +82,7 @@ public actor BreezeDynamoDBService: Service {
         
         config.logger.info("Shutting down DynamoDBService...")
         try await awsClient.shutdown()
+        config.logger.info("DynamoDBService is stopped.")
     }
 }
 

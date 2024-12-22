@@ -38,8 +38,7 @@ enum LocalStackDynamoDB {
     
     static let client = AWSClient(
         credentialProvider: .static(accessKeyId: "breeze", secretAccessKey: "magic"),
-        middlewares: [AWSLoggingMiddleware()],
-        httpClientProvider: .createNew
+        middleware: AWSLoggingMiddleware()
     )
 
     static let dynamoDB = DynamoDB(
@@ -67,4 +66,3 @@ enum LocalStackDynamoDB {
         _ = try await Self.dynamoDB.deleteTable(input, logger: Self.logger)
     }
 }
-

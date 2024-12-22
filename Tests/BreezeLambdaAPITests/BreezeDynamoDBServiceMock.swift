@@ -16,8 +16,6 @@ import BreezeDynamoDBService
 @testable import BreezeLambdaAPI
 import SotoDynamoDB
 
-
-
 struct BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
     var keyName: String
 

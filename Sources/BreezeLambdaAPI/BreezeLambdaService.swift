@@ -18,13 +18,16 @@ import NIOCore
 import BreezeDynamoDBService
 import AWSLambdaRuntime
 import AWSLambdaEvents
+import Logging
 
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
     let dynamoDBService: BreezeDynamoDBService
+    let logger: Logger
     
-    init(dynamoDBService: BreezeDynamoDBService) {
+    init(dynamoDBService: BreezeDynamoDBService, logger: Logger) {
         self.dynamoDBService = dynamoDBService
+        self.logger = logger
     }
     
     var breezeApi: BreezeLambdaAPIHandler<T>?
@@ -35,9 +38,17 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
     }
     
     func run() async throws {
-        let breezeApi = try await BreezeLambdaAPIHandler<T>(service: dynamoDBService)
-        self.breezeApi = breezeApi
-        let runtime = LambdaRuntime(body: handler)
-        try await runtime.run()
+        do {
+            logger.info("Initializing BreezeLambdaAPIHandler...")
+            let breezeApi = try await BreezeLambdaAPIHandler<T>(service: dynamoDBService)
+            self.breezeApi = breezeApi
+            logger.info("Starting BreezeLambdaAPIHandler...")
+            let runtime = LambdaRuntime(body: handler)
+            try await runtime.run()
+            logger.info("BreezeLambdaAPIHandler stopped.")
+        } catch {
+            logger.error("\(error.localizedDescription)")
+            fatalError("\(error.localizedDescription)")
+        }
     }
 }

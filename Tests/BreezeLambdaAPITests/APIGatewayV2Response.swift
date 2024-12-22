@@ -13,7 +13,11 @@
 //    limitations under the License.
 
 import AWSLambdaEvents
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 extension APIGatewayV2Response {
     func decodeBody<Out: Decodable>() throws -> Out {

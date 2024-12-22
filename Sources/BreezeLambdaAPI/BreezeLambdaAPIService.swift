@@ -59,49 +59,59 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
     }
     
     public init(dbTimeout: Int64 = 30) throws {
-        self.timeout = .seconds(dbTimeout)
-        self.httpClientService = BreezeHTTPClientService(
-            timeout: timeout,
-            logger: logger
-        )
-        let config = BreezeDynamoDBService.Config(
-            httpClientService: httpClientService,
-            region: Self.currentRegion(),
-            tableName: try Self.tableName(),
-            keyName: try Self.keyName(),
-            endpoint: Self.endpoint(),
-            logger: logger
-        )
-        self.dynamoDBService = BreezeDynamoDBService(with: config)
-        self.breezeLambdaService = BreezeLambdaService<T>(dynamoDBService: dynamoDBService)
-
-        self.serviceGroup = ServiceGroup(
-            configuration: .init(
-                services: [
-                    .init(
-                        service: httpClientService,
-                        successTerminationBehavior: .ignore,
-                        failureTerminationBehavior: .gracefullyShutdownGroup
-                    ),
-                    .init(
-                        service: dynamoDBService,
-                        successTerminationBehavior: .gracefullyShutdownGroup,
-                        failureTerminationBehavior: .gracefullyShutdownGroup
-                    ),
-                    .init(
-                        service: breezeLambdaService,
-                        successTerminationBehavior: .gracefullyShutdownGroup,
-                        failureTerminationBehavior: .gracefullyShutdownGroup
-                    )
-                ],
+        do {
+            self.timeout = .seconds(dbTimeout)
+            self.httpClientService = BreezeHTTPClientService(
+                timeout: timeout,
                 logger: logger
             )
-        )
+            let config = BreezeDynamoDBService.Config(
+                httpClientService: httpClientService,
+                region: Self.currentRegion(),
+                tableName: try Self.tableName(),
+                keyName: try Self.keyName(),
+                endpoint: Self.endpoint(),
+                logger: logger
+            )
+            self.dynamoDBService = BreezeDynamoDBService(with: config)
+            self.breezeLambdaService = BreezeLambdaService<T>(
+                dynamoDBService: dynamoDBService,
+                logger: logger
+            )
+            
+            self.serviceGroup = ServiceGroup(
+                configuration: .init(
+                    services: [
+                        .init(
+                            service: httpClientService,
+                            successTerminationBehavior: .ignore,
+                            failureTerminationBehavior: .gracefullyShutdownGroup
+                        ),
+                        .init(
+                            service: dynamoDBService,
+                            successTerminationBehavior: .gracefullyShutdownGroup,
+                            failureTerminationBehavior: .gracefullyShutdownGroup
+                        ),
+                        .init(
+                            service: breezeLambdaService,
+                            successTerminationBehavior: .gracefullyShutdownGroup,
+                            failureTerminationBehavior: .gracefullyShutdownGroup
+                        )
+                    ],
+                    logger: logger
+                )
+            )
+        } catch {
+            logger.error("\(error.localizedDescription)")
+            fatalError(error.localizedDescription)
+        }
     }
     
     public func run() async throws {
+        logger.info("Starting BreezeLambdaAPIService...")
         try await serviceGroup.run()
-        
+        logger.info("Shutting down BreezeLambdaAPIService...")
         try await gracefulShutdown()
+        logger.info("BreezeLambdaAPIService is stopped.")
     }
 }

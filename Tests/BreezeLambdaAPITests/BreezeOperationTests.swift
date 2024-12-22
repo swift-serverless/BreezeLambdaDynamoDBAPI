@@ -12,33 +12,43 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
-import XCTest
+#endif
+import Testing
 @testable import BreezeLambdaAPI
 
-final class BreezeOperationTests: XCTestCase {
+@Suite
+struct BreezeOperationTests {
+    @Test
     func test_createOperation() {
-        XCTAssertEqual(BreezeOperation(handler: "build/Products.create"), BreezeOperation.create)
-        XCTAssertEqual(BreezeOperation(handler: "create"), BreezeOperation.create)
+        #expect(BreezeOperation(handler: "build/Products.create") == BreezeOperation.create)
+        #expect(BreezeOperation(handler: "create") == BreezeOperation.create)
     }
     
+    @Test
     func test_readOperation() {
-        XCTAssertEqual(BreezeOperation(handler: "build/Products.read"), BreezeOperation.read)
-        XCTAssertEqual(BreezeOperation(handler: "read"), BreezeOperation.read)
+        #expect(BreezeOperation(handler: "build/Products.read") == BreezeOperation.read)
+        #expect(BreezeOperation(handler: "read") == BreezeOperation.read)
     }
     
+    @Test
     func test_updateOperation() {
-        XCTAssertEqual(BreezeOperation(handler: "build/Products.update"), BreezeOperation.update)
-        XCTAssertEqual(BreezeOperation(handler: "update"), BreezeOperation.update)
+        #expect(BreezeOperation(handler: "build/Products.update") == BreezeOperation.update)
+        #expect(BreezeOperation(handler: "update") == BreezeOperation.update)
     }
     
+    @Test
     func test_deleteOperation() {
-        XCTAssertEqual(BreezeOperation(handler: "build/Products.delete"), BreezeOperation.delete)
-        XCTAssertEqual(BreezeOperation(handler: "delete"), BreezeOperation.delete)
+        #expect(BreezeOperation(handler: "build/Products.delete") == BreezeOperation.delete)
+        #expect(BreezeOperation(handler: "delete") == BreezeOperation.delete)
     }
     
+    @Test
     func test_listOperation() {
-        XCTAssertEqual(BreezeOperation(handler: "build/Products.list"), BreezeOperation.list)
-        XCTAssertEqual(BreezeOperation(handler: "list"), BreezeOperation.list)
+        #expect(BreezeOperation(handler: "build/Products.list") == BreezeOperation.list)
+        #expect(BreezeOperation(handler: "list") == BreezeOperation.list)
     }
 }
