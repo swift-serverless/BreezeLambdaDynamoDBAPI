@@ -12,17 +12,18 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import Logging
 
-public struct ListResponse<Item: CodableSendable>: CodableSendable {
-    public init(items: [Item], lastEvaluatedKey: String? = nil) {
-        self.items = items
-        self.lastEvaluatedKey = lastEvaluatedKey
+public struct BreezeClientServiceConfig: Sendable {
+    
+    public let httpClientService: BreezeHTTPClientServing
+    public let logger: Logger
+    
+    public init(
+        httpClientService: BreezeHTTPClientServing,
+        logger: Logger
+    ) {
+        self.httpClientService = httpClientService
+        self.logger = logger
     }
-    public let items: [Item]
-    public let lastEvaluatedKey: String?
 }

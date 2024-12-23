@@ -25,9 +25,9 @@ import Foundation
 #endif
 
 public struct BreezeLambdaAPIHandler<T: BreezeCodable>: LambdaHandler, Sendable {
-    let service: BreezeDynamoDBService
+    let service: BreezeDynamoDBServing
 
-    public init(service: BreezeDynamoDBService) async throws {
+    public init(service: BreezeDynamoDBServing) async throws {
         self.service = service
     }
     

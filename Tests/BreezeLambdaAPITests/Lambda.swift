@@ -37,6 +37,9 @@ extension Lambda {
     
     static func test<T: BreezeCodable>(
         _ handlerType: BreezeLambdaAPIHandler<T>.Type,
+        config: BreezeDynamoDBConfig,
+        response: (any BreezeCodable)?,
+        keyedResponse: (any BreezeCodable)?,
         with event: BreezeLambdaAPIHandler.Event) async throws -> BreezeLambdaAPIHandler<T>.Output {
             
         let logger = Logger(label: "evaluateHandler")
@@ -45,14 +48,11 @@ extension Lambda {
         
         return try await testGracefulShutdown { gracefulShutdownTestTrigger in
             let httpClientService = BreezeHTTPClientService(timeout: .seconds(1), logger: logger)
-            let config = BreezeDynamoDBService.Config(
+            let serviceConfig = BreezeClientServiceConfig(
                 httpClientService: httpClientService,
-                region: .useast1,
-                tableName: "Breeze",
-                keyName: "key",
-                endpoint: nil,
                 logger: logger)
-            let dynamoDBService = BreezeDynamoDBService(with: config)
+            let dynamoDBService = BreezeDynamoDBService(config: config, serviceConfig: serviceConfig, DBManagingType: BreezeDynamoDBServiceMock.self)
+        
             let sut = try await handlerType.init(service: dynamoDBService)
             
             let serviceGroup = ServiceGroup(
@@ -84,7 +84,12 @@ extension Lambda {
                         gracefulShutdownTestTrigger.triggerGracefulShutdown()
                     }
                     let closureHandler = ClosureHandler { event, context in
-                        try await sut.handle(event, context: context)
+                        //Inject Mock Response
+                        let dbManager = await dynamoDBService.dbManager as? BreezeDynamoDBServiceMock
+                        await dbManager?.setupMockResponse(response: response, keyedResponse: keyedResponse)
+                
+                        // Execute Handler
+                        return try await sut.handle(event, context: context)
                     }
                     
                     var handler = LambdaCodableAdapter(

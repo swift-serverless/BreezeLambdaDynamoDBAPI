@@ -18,7 +18,9 @@ import FoundationEssentials
 import Foundation
 #endif
 
-public protocol BreezeCodable: Codable, Sendable {
+public protocol CodableSendable: Sendable, Codable { }
+
+public protocol BreezeCodable: CodableSendable {
     var key: String { get set }
     var createdAt: String? { get set }
     var updatedAt: String? { get set }

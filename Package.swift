@@ -3,7 +3,7 @@
 import PackageDescription
 
 #if os(macOS)
-let platforms: [PackageDescription.SupportedPlatform]? = [.macOS(.v15)]
+let platforms: [PackageDescription.SupportedPlatform]? = [.macOS(.v15), .iOS(.v13)]
 #else
 let platforms: [PackageDescription.SupportedPlatform]? = nil
 #endif

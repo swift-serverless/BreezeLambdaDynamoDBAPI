@@ -17,11 +17,11 @@ import AsyncHTTPClient
 import NIOCore
 import Logging
 
-public protocol BreezeHTTPClientServing: Service {
+public protocol BreezeHTTPClientServing: Actor, Service {
     var httpClient: HTTPClient { get }
 }
 
-public actor BreezeHTTPClientService: Service {
+public actor BreezeHTTPClientService: BreezeHTTPClientServing {
     
     public let httpClient: HTTPClient
     let logger: Logger
@@ -49,6 +49,9 @@ public actor BreezeHTTPClientService: Service {
         try await httpClient.shutdown()
         logger.info("HTTPClientService shutdown completed.")
     }
+    
+    deinit {
+        try? httpClient.syncShutdown()
+    }
 }
 
-extension BreezeHTTPClientService: BreezeHTTPClientServing { }

@@ -12,17 +12,23 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import SotoCore
 
-public struct ListResponse<Item: CodableSendable>: CodableSendable {
-    public init(items: [Item], lastEvaluatedKey: String? = nil) {
-        self.items = items
-        self.lastEvaluatedKey = lastEvaluatedKey
+public struct BreezeDynamoDBConfig: Sendable {
+    public init(
+        region: Region,
+        tableName: String,
+        keyName: String,
+        endpoint: String? = nil
+    ) {
+        self.region = region
+        self.tableName = tableName
+        self.keyName = keyName
+        self.endpoint = endpoint
     }
-    public let items: [Item]
-    public let lastEvaluatedKey: String?
+    
+    let region: Region
+    let tableName: String
+    let keyName: String
+    let endpoint: String?
 }

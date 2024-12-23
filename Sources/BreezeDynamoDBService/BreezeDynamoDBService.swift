@@ -17,72 +17,64 @@ import ServiceLifecycle
 import BreezeHTTPClientService
 import Logging
 
-public extension BreezeDynamoDBService {
-    enum DynamoDB {
-        nonisolated(unsafe) public static var Service: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
-    }
+public protocol BreezeDynamoDBServing: Actor, Service {
+    var dbManager: BreezeDynamoDBManaging? { get }
 }
 
-public actor BreezeDynamoDBService: Service {
-    
-    public struct Config: Sendable {
-        
-        let httpClientService: BreezeHTTPClientService
-        let region: Region
-        let tableName: String
-        let keyName: String
-        let endpoint: String?
-        let logger: Logger
-        
-        public init(
-            httpClientService: BreezeHTTPClientService,
-            region: Region,
-            tableName: String,
-            keyName: String,
-            endpoint: String?,
-            logger: Logger
-        ) {
-            self.httpClientService = httpClientService
-            self.region = region
-            self.tableName = tableName
-            self.keyName = keyName
-            self.endpoint = endpoint
-            self.logger = logger
-        }
-    }
+public actor BreezeDynamoDBService: BreezeDynamoDBServing {
 
     public var dbManager: BreezeDynamoDBManaging?
-    private let config: Config
+    private let config: BreezeDynamoDBConfig
+    private let serviceConfig: BreezeClientServiceConfig
+    private let DBManagingType: BreezeDynamoDBManaging.Type
     
-    public init(with config: Config) {
+    public init(
+        config: BreezeDynamoDBConfig,
+        serviceConfig: BreezeClientServiceConfig,
+        DBManagingType: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
+    ) {
         self.config = config
+        self.serviceConfig = serviceConfig
+        self.DBManagingType = DBManagingType
+    }
+    
+    private var awsClient: AWSClient?
+    
+    private var logger: Logger {
+        serviceConfig.logger
     }
     
     public func run() async throws {
-        config.logger.info("Starting DynamoDBService...")
-        let httpClient = await config.httpClientService.httpClient
+        logger.info("Starting DynamoDBService...")
+        let httpClient = await serviceConfig.httpClientService.httpClient
         let awsClient = AWSClient(httpClient: httpClient)
+        self.awsClient = awsClient
         let db = SotoDynamoDB.DynamoDB(
             client: awsClient,
             region: config.region,
             endpoint: config.endpoint
         )
-        self.dbManager = DynamoDB.Service.init(
+        self.dbManager = DBManagingType.init(
             db: db,
             tableName: config.tableName,
             keyName: config.keyName
         )
         
-        config.logger.info("DynamoDBService is running with config...")
-        config.logger.info("region: \(config.region)")
-        config.logger.info("tableName: \(config.tableName)")
-        config.logger.info("keyName: \(config.keyName)")
+        logger.info("DynamoDBService is running with config...")
+        logger.info("region: \(config.region)")
+        logger.info("tableName: \(config.tableName)")
+        logger.info("keyName: \(config.keyName)")
         
         try await gracefulShutdown()
         
-        config.logger.info("Shutting down DynamoDBService...")
+        logger.info("Shutting down DynamoDBService...")
         try await awsClient.shutdown()
-        config.logger.info("DynamoDBService is stopped.")
+        self.awsClient = nil
+        logger.info("DynamoDBService is stopped.")
+    }
+    
+    deinit {
+        try? awsClient?.syncShutdown()
     }
 }
 

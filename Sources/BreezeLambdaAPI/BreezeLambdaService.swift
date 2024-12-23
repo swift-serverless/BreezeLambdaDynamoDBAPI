@@ -22,10 +22,10 @@ import Logging
 
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
-    let dynamoDBService: BreezeDynamoDBService
+    let dynamoDBService: BreezeDynamoDBServing
     let logger: Logger
     
-    init(dynamoDBService: BreezeDynamoDBService, logger: Logger) {
+    init(dynamoDBService: BreezeDynamoDBServing, logger: Logger) {
         self.dynamoDBService = dynamoDBService
         self.logger = logger
     }

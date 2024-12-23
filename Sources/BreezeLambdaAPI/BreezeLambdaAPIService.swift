@@ -22,8 +22,8 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
     
     let logger = Logger(label: "service-group")
     let timeout: TimeAmount
-    let httpClientService: BreezeHTTPClientService
-    let dynamoDBService: BreezeDynamoDBService
+    let httpClientService: BreezeHTTPClientServing
+    let dynamoDBService: BreezeDynamoDBServing
     let breezeLambdaService: BreezeLambdaService<T>
     private let serviceGroup: ServiceGroup
     
@@ -65,20 +65,21 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
                 timeout: timeout,
                 logger: logger
             )
-            let config = BreezeDynamoDBService.Config(
-                httpClientService: httpClientService,
+            let config = BreezeDynamoDBConfig(
                 region: Self.currentRegion(),
                 tableName: try Self.tableName(),
                 keyName: try Self.keyName(),
-                endpoint: Self.endpoint(),
+                endpoint: Self.endpoint()
+            )
+            let serviceConfig = BreezeClientServiceConfig(
+                httpClientService: httpClientService,
                 logger: logger
             )
-            self.dynamoDBService = BreezeDynamoDBService(with: config)
+            self.dynamoDBService = BreezeDynamoDBService(config: config, serviceConfig: serviceConfig)
             self.breezeLambdaService = BreezeLambdaService<T>(
                 dynamoDBService: dynamoDBService,
                 logger: logger
             )
-            
             self.serviceGroup = ServiceGroup(
                 configuration: .init(
                     services: [

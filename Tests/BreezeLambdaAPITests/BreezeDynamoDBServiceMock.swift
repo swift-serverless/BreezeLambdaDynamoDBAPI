@@ -16,25 +16,30 @@ import BreezeDynamoDBService
 @testable import BreezeLambdaAPI
 import SotoDynamoDB
 
-struct BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
-    var keyName: String
+actor BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
+    let keyName: String
 
-    nonisolated(unsafe) static var response: (any BreezeCodable)?
-    nonisolated(unsafe) static var keyedResponse: (any BreezeCodable)?
+    private var response: (any BreezeCodable)?
+    private var keyedResponse: (any BreezeCodable)?
+    
+    func setupMockResponse(response: (any BreezeCodable)?, keyedResponse: (any BreezeCodable)?) {
+            self.keyedResponse = keyedResponse
+            self.response = response
+    }
 
     init(db: SotoDynamoDB.DynamoDB, tableName: String, keyName: String) {
         self.keyName = keyName
     }
 
     func createItem<T: BreezeCodable>(item: T) async throws -> T {
-        guard let response = Self.response as? T else {
+        guard let response = self.response as? T else {
             throw BreezeLambdaAPIError.invalidRequest
         }
         return response
     }
 
     func readItem<T: BreezeCodable>(key: String) async throws -> T {
-        guard let response = Self.keyedResponse as? T,
+        guard let response = self.keyedResponse as? T,
               response.key == key
         else {
             throw BreezeLambdaAPIError.invalidRequest
@@ -43,7 +48,7 @@ struct BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
     }
 
     func updateItem<T: BreezeCodable>(item: T) async throws -> T {
-        guard let response = Self.keyedResponse as? T,
+        guard let response = self.keyedResponse as? T,
               response.key == item.key
         else {
             throw BreezeLambdaAPIError.invalidRequest
@@ -52,7 +57,7 @@ struct BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
     }
 
     func deleteItem<T: BreezeCodable>(item: T) async throws {
-        guard let response = Self.keyedResponse,
+        guard let response = self.keyedResponse,
               response.key == item.key,
               response.createdAt == item.createdAt,
               response.updatedAt == item.updatedAt
@@ -62,21 +67,14 @@ struct BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
         return
     }
 
-    nonisolated(unsafe) static var limit: Int?
-    nonisolated(unsafe) static var exclusiveKey: String?
+    var limit: Int?
+    var exclusiveKey: String?
     func listItems<T: BreezeCodable>(key: String?, limit: Int?) async throws -> ListResponse<T> {
-        guard let response = Self.response as? T else {
+        guard let response = self.response as? T else {
             throw BreezeLambdaAPIError.invalidItem
         }
-        Self.limit = limit
-        Self.exclusiveKey = key
+        self.limit = limit
+        self.exclusiveKey = key
         return ListResponse(items: [response], lastEvaluatedKey: key)
-    }
-
-    static func reset() {
-        Self.limit = nil
-        Self.exclusiveKey = nil
-        Self.response = nil
-        Self.keyedResponse = nil
     }
 }
