@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -35,91 +35,6 @@ struct BreezeLambdaHandlerTests {
     
     let logger = Logger(label: "BreezeLambdaAPITests")
     let config = BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "sku")
-
-//    @Test
-//    func test_initWhenMissing_AWS_REGION_thenDefaultRegion() async throws {
-//        try setUpWithError()
-////        unsetenv("AWS_REGION")
-//        setEnvironmentVar(name: "_HANDLER", value: "build/Products.create", overwrite: true)
-//        let response = Fixtures.product2023
-//        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
-//        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-//        try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: response, keyedResponse: nil, with: request)
-//        try tearDownWithError()
-//    }
-
-//    func test_initWhenMissing__HANDLER_thenThrowError() async throws {
-//        let response = Fixtures.product2023
-//        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
-//        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-//        do {
-//            _ = try await Lambda.test(
-//                BreezeLambdaAPIHandler<Product>.self,
-//                config: config,
-//                response: response,
-//                keyedResponse: nil,
-//                with: request
-//            )
-//            Issue.record("It should throw an Error when _HANDLER is missing")
-//        } catch BreezeLambdaAPIError.invalidHandler {
-//            #expect(true)
-//        } catch {
-//            Issue.record("Is should throw an BreezeLambdaAPIError.invalidHandler")
-//        }
-//    }
-//    
-//    func test_initWhenInvalid__HANDLER_thenThrowError() async throws {
-//        setEnvironmentVar(name: "_HANDLER", value: "build/Products.c", overwrite: true)
-//        let response = Fixtures.product2023
-//        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
-//        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-//        do {
-//            _ = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: response, keyedResponse: nil, with: request)
-//            Issue.record("It should throw an Error when _HANDLER is invalid")
-//        } catch BreezeLambdaAPIError.invalidHandler {
-//            #expect(true)
-//        } catch {
-//            Issue.record("Is should throw an BreezeLambdaAPIError.invalidHandler")
-//        }
-//    }
-    
-//    @Test
-//    func test_initWhenMissing_DYNAMO_DB_TABLE_NAME_thenThrowError() async throws {
-//        try setUpWithError()
-//        unsetenv("DYNAMO_DB_TABLE_NAME")
-//        setEnvironmentVar(name: "_HANDLER", value: "build/Products.create", overwrite: true)
-//        BreezeDynamoDBServiceMock.response = Fixtures.product2023
-//        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
-//        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-//        do {
-//            let value = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, with: request)
-//            Issue.record("It should throw an Error when DYNAMO_DB_TABLE_NAME is missing")
-//        } catch BreezeLambdaAPIError.tableNameNotFound {
-//            #expect(true)
-//        } catch {
-//            Issue.record("Is should throw an BreezeLambdaAPIError.tableNameNotFound")
-//        }
-//        try tearDownWithError()
-//    }
-    
-//    @Test
-//    func test_initWhenMissing_DYNAMO_DB_KEY_thenThrowError() async throws {
-//        try setUpWithError()
-//        unsetenv("DYNAMO_DB_KEY")
-//        setEnvironmentVar(name: "_HANDLER", value: "build/Products.create", overwrite: true)
-//        BreezeDynamoDBServiceMock.response = Fixtures.product2023
-//        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
-//        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-//        do {
-//            _ = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, with: request)
-//            Issue.record("It should throw an Error when DYNAMO_DB_KEY is missing")
-//        } catch BreezeLambdaAPIError.keyNameNotFound {
-//            #expect(true)
-//        } catch {
-//            Issue.record("Is should throw an BreezeLambdaAPIError.keyNameNotFound")
-//        }
-//        try tearDownWithError()
-//    }
     
     @Test
     func test_create() async throws {

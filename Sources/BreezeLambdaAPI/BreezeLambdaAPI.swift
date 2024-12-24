@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -18,68 +18,25 @@ import BreezeDynamoDBService
 import BreezeHTTPClientService
 import AWSLambdaRuntime
 
-public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
+public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     
-    let logger = Logger(label: "service-group")
+    let logger = Logger(label: "service-group-breeze-lambda-api")
     let timeout: TimeAmount
     let httpClientService: BreezeHTTPClientServing
     let dynamoDBService: BreezeDynamoDBServing
     let breezeLambdaService: BreezeLambdaService<T>
     private let serviceGroup: ServiceGroup
+    private let apiConfig: any APIConfiguring
     
-    static func currentRegion() -> Region {
-        if let awsRegion = Lambda.env("AWS_REGION") {
-            let value = Region(rawValue: awsRegion)
-            return value
-        } else {
-            return .useast1
-        }
-    }
-    
-    static func tableName() throws -> String {
-        guard let tableName = Lambda.env("DYNAMO_DB_TABLE_NAME") else {
-            throw BreezeLambdaAPIError.tableNameNotFound
-        }
-        return tableName
-    }
-    
-    static func keyName() throws -> String {
-        guard let tableName = Lambda.env("DYNAMO_DB_KEY") else {
-            throw BreezeLambdaAPIError.keyNameNotFound
-        }
-        return tableName
-    }
-    
-    static func endpoint() -> String? {
-        if let localstack = Lambda.env("LOCALSTACK_ENDPOINT"),
-           !localstack.isEmpty {
-            return localstack
-        }
-        return nil
-    }
-    
-    static func operation() throws -> BreezeOperation {
-        guard let handler = Lambda.env("_HANDLER"),
-              let operation = BreezeOperation(handler: handler)
-        else {
-            throw BreezeLambdaAPIError.invalidHandler
-        }
-        return operation
-    }
-    
-    public init(dbTimeout: Int64 = 30) throws {
+    public init(apiConfig: APIConfiguring = BreezeAPIConfiguration()) throws {
         do {
-            self.timeout = .seconds(dbTimeout)
+            self.apiConfig = apiConfig
+            self.timeout = .seconds(apiConfig.dbTimeout)
             self.httpClientService = BreezeHTTPClientService(
                 timeout: timeout,
                 logger: logger
             )
-            let config = BreezeDynamoDBConfig(
-                region: Self.currentRegion(),
-                tableName: try Self.tableName(),
-                keyName: try Self.keyName(),
-                endpoint: Self.endpoint()
-            )
+            let config = try apiConfig.getConfig()
             let serviceConfig = BreezeClientServiceConfig(
                 httpClientService: httpClientService,
                 logger: logger
@@ -87,7 +44,7 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
             self.dynamoDBService = BreezeDynamoDBService(config: config, serviceConfig: serviceConfig)
             self.breezeLambdaService = BreezeLambdaService<T>(
                 dynamoDBService: dynamoDBService,
-                operation: try Self.operation(),
+                operation: try apiConfig.operation(),
                 logger: logger
             )
             self.serviceGroup = ServiceGroup(
@@ -114,14 +71,14 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
             )
         } catch {
             logger.error("\(error.localizedDescription)")
-            fatalError(error.localizedDescription)
+            throw error
         }
     }
     
     public func run() async throws {
         logger.info("Starting BreezeLambdaAPIService...")
         try await serviceGroup.run()
-        logger.info("Shutting down BreezeLambdaAPIService...")
+        logger.info("Stopping BreezeLambdaAPIService...")
         try await gracefulShutdown()
         logger.info("BreezeLambdaAPIService is stopped.")
     }

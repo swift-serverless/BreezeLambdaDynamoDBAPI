@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
         self.dbManager.keyName
     }
     
-    public func handle(_ event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
+    func handle(_ event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
         switch self.operation {
         case .create:
             return await self.createLambdaHandler(context: context, event: event)

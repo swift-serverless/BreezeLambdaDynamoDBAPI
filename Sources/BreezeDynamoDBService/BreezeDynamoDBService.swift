@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -18,15 +18,36 @@ import BreezeHTTPClientService
 import Logging
 
 public protocol BreezeDynamoDBServing: Actor, Service {
-    var dbManager: BreezeDynamoDBManaging? { get }
+    func dbManager() async -> BreezeDynamoDBManaging
 }
 
 public actor BreezeDynamoDBService: BreezeDynamoDBServing {
-
-    public var dbManager: BreezeDynamoDBManaging?
+    
+    private var _dbManager: BreezeDynamoDBManaging?
     private let config: BreezeDynamoDBConfig
     private let serviceConfig: BreezeClientServiceConfig
     private let DBManagingType: BreezeDynamoDBManaging.Type
+    
+    public func dbManager() async -> BreezeDynamoDBManaging {
+        if let _dbManager {
+            return _dbManager
+        }
+        let httpClient = await serviceConfig.httpClientService.httpClient
+        let awsClient = AWSClient(httpClient: httpClient)
+        self.awsClient = awsClient
+        let db = SotoDynamoDB.DynamoDB(
+            client: awsClient,
+            region: config.region,
+            endpoint: config.endpoint
+        )
+        let dbManager = DBManagingType.init(
+            db: db,
+            tableName: config.tableName,
+            keyName: config.keyName
+        )
+        _dbManager = dbManager
+        return dbManager
+    }
     
     public init(
         config: BreezeDynamoDBConfig,
@@ -46,20 +67,6 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     
     public func run() async throws {
         logger.info("Starting DynamoDBService...")
-        let httpClient = await serviceConfig.httpClientService.httpClient
-        let awsClient = AWSClient(httpClient: httpClient)
-        self.awsClient = awsClient
-        let db = SotoDynamoDB.DynamoDB(
-            client: awsClient,
-            region: config.region,
-            endpoint: config.endpoint
-        )
-        self.dbManager = DBManagingType.init(
-            db: db,
-            tableName: config.tableName,
-            keyName: config.keyName
-        )
-        
         logger.info("DynamoDBService is running with config...")
         logger.info("region: \(config.region)")
         logger.info("tableName: \(config.tableName)")
@@ -67,8 +74,8 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
         
         try await gracefulShutdown()
         
-        logger.info("Shutting down DynamoDBService...")
-        try await awsClient.shutdown()
+        logger.info("Stopping DynamoDBService...")
+        try await awsClient?.shutdown()
         self.awsClient = nil
         logger.info("DynamoDBService is stopped.")
     }

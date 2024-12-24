@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public actor BreezeHTTPClientService: BreezeHTTPClientServing {
         logger.info("HTTPClientService started...")
         try await gracefulShutdown()
         
-        logger.info("Shutting down HTTPClientService...")
+        logger.info("Stopping HTTPClientService...")
         try await httpClient.shutdown()
         logger.info("HTTPClientService shutdown completed.")
     }

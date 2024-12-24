@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -41,19 +41,17 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
     
     func run() async throws {
         do {
-            logger.info("Initializing BreezeLambdaAPIHandler...")
-            guard let dbManager = await dynamoDBService.dbManager else {
-                throw BreezeLambdaAPIError.invalidService
-            }
+            logger.info("Starting BreezeLambdaService...")
+            let dbManager = await dynamoDBService.dbManager()
             let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: operation)
             self.breezeApi = breezeApi
-            logger.info("Starting BreezeLambdaAPIHandler...")
+            logger.info("Starting BreezeLambdaService...")
             let runtime = LambdaRuntime(body: handler)
             try await runtime.run()
-            logger.info("BreezeLambdaAPIHandler stopped.")
+            logger.info("BreezeLambdaService stopped.")
         } catch {
             logger.error("\(error.localizedDescription)")
-            fatalError("\(error.localizedDescription)")
+            throw error
         }
     }
 }
