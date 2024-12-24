@@ -27,14 +27,9 @@ import Foundation
 import Logging
 import Testing
 import SotoDynamoDB
+import AsyncHTTPClient
 
 extension Lambda {
-    
-    enum TestState {
-        case none
-        case running
-        case result(BreezeLambdaHandler.Output)
-    }
     
     static func test<T: BreezeCodable>(
         _ handlerType: BreezeLambdaHandler<T>.Type,
@@ -48,83 +43,36 @@ extension Lambda {
         let decoder = JSONDecoder()
         let encoder = JSONEncoder()
         
-        return try await testGracefulShutdown { gracefulShutdownTestTrigger in
-            let httpClientService = BreezeHTTPClientService(timeout: .seconds(1), logger: logger)
-            let awsClient = AWSClient()
-            let db = SotoDynamoDB.DynamoDB(client: awsClient)
-            let dbManager = BreezeDynamoDBManagerMock(db: db, tableName: config.tableName, keyName: config.keyName)
-            let sut = handlerType.init(dbManager: dbManager, operation: operation)
-            
-            let serviceGroup = ServiceGroup(
-                configuration: .init(
-                    services: [
-                        .init(
-                            service: httpClientService,
-                            successTerminationBehavior: .ignore,
-                            failureTerminationBehavior: .gracefullyShutdownGroup
-                        )
-                    ],
-                    logger: logger
-                )
-            )
-            
-            let testState = try await withThrowingTaskGroup(of: TestState.self) { group in
-                group.addTask {
-                    try await serviceGroup.run()
-                    try await awsClient.shutdown()
-                    return TestState.running
-                }
-                
-                group.addTask {
-                    defer {
-                        gracefulShutdownTestTrigger.triggerGracefulShutdown()
-                    }
-                    let closureHandler = ClosureHandler { event, context in
-                        //Inject Mock Response
-                        await dbManager.setupMockResponse(response: response, keyedResponse: keyedResponse)
-                
-                        // Execute Handler
-                        return try await sut.handle(event, context: context)
-                    }
-                    
-                    var handler = LambdaCodableAdapter(
-                        encoder: encoder,
-                        decoder: decoder,
-                        handler: LambdaHandlerAdapter(handler: closureHandler)
-                    )
-                    let data = try encoder.encode(event)
-                    let event = ByteBuffer(data: data)
-                    let writer = MockLambdaResponseStreamWriter()
-                    let context = LambdaContext.__forTestsOnly(
-                        requestID: UUID().uuidString,
-                        traceID: UUID().uuidString,
-                        invokedFunctionARN: "arn:",
-                        timeout: .milliseconds(6000),
-                        logger: logger
-                    )
-                    
-                    try await handler.handle(event, responseWriter: writer, context: context)
-                    
-                    let result = await writer.output ?? ByteBuffer()
-                    return TestState.result(try decoder.decode(BreezeLambdaHandler<T>.Output.self, from: result))
-                }
-                for try await value in group {
-                    switch value {
-                    case .none, .running:
-                        break
-                    case .result:
-                        return value
-                    }
-                }
-                return TestState.none
-            }
-            
-            switch testState {
-            case .none, .running:
-                return APIGatewayV2Response(with: "", statusCode: .noContent)
-            case .result(let response):
-                return response
-            }
+        let awsClient = AWSClient()
+        let db = SotoDynamoDB.DynamoDB(client: awsClient)
+        let dbManager = BreezeDynamoDBManagerMock(db: db, tableName: config.tableName, keyName: config.keyName)
+        let sut = handlerType.init(dbManager: dbManager, operation: operation)
+
+        let closureHandler = ClosureHandler { event, context in
+            //Inject Mock Response
+            await dbManager.setupMockResponse(response: response, keyedResponse: keyedResponse)
+            // Execute Handler
+            return try await sut.handle(event, context: context)
         }
+        
+        var handler = LambdaCodableAdapter(
+            encoder: encoder,
+            decoder: decoder,
+            handler: LambdaHandlerAdapter(handler: closureHandler)
+        )
+        let data = try encoder.encode(event)
+        let event = ByteBuffer(data: data)
+        let writer = MockLambdaResponseStreamWriter()
+        let context = LambdaContext.__forTestsOnly(
+            requestID: UUID().uuidString,
+            traceID: UUID().uuidString,
+            invokedFunctionARN: "arn:",
+            timeout: .milliseconds(6000),
+            logger: logger
+        )
+        try await handler.handle(event, responseWriter: writer, context: context)
+        let result = await writer.output ?? ByteBuffer()
+        try await awsClient.shutdown()
+        return try decoder.decode(BreezeLambdaHandler<T>.Output.self, from: result)
     }
 }

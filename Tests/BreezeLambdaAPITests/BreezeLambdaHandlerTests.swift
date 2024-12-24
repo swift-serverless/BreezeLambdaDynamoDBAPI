@@ -34,34 +34,7 @@ struct BreezeLambdaHandlerTests {
     let encoder = JSONEncoder()
     
     let logger = Logger(label: "BreezeLambdaAPITests")
-    
     let config = BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "sku")
-    
-//    @Test
-//    func testSerially() async throws {
-//        try await test_initWhenMissing__HANDLER_thenThrowError()
-//        try await test_initWhenInvalid__HANDLER_thenThrowError()
-//        
-//        try await test_create()
-//        try await test_create_whenInvalidItem_thenError()
-//        try await test_create_whenMissingItem_thenError()
-//        
-//        try await test_read()
-//        try await test_read_whenInvalidRequest_thenError()
-//        try await test_read_whenMissingItem_thenError()
-//        
-//        try await test_update()
-//        try await test_update_whenInvalidRequest_thenError()
-//        try await test_update_whenMissingItem_thenError()
-//        
-//        try await test_delete()
-//        try await test_delete_whenRequestIsOutaded()
-//        try await test_delete_whenInvalidRequest_thenError()
-//        try await test_delete_whenMissingItem_thenError()
-//        
-//        try await test_list()
-//        try await test_list_whenError()
-//    }
 
 //    @Test
 //    func test_initWhenMissing_AWS_REGION_thenDefaultRegion() async throws {
