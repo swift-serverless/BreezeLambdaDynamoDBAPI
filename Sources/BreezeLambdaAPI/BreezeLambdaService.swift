@@ -23,14 +23,16 @@ import Logging
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
     let dynamoDBService: BreezeDynamoDBServing
+    let operation: BreezeOperation
     let logger: Logger
     
-    init(dynamoDBService: BreezeDynamoDBServing, logger: Logger) {
+    init(dynamoDBService: BreezeDynamoDBServing, operation: BreezeOperation, logger: Logger) {
         self.dynamoDBService = dynamoDBService
+        self.operation = operation
         self.logger = logger
     }
     
-    var breezeApi: BreezeLambdaAPIHandler<T>?
+    var breezeApi: BreezeLambdaHandler<T>?
     
     func handler(event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
         guard let breezeApi else { throw BreezeLambdaAPIError.invalidHandler }
@@ -40,7 +42,10 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
     func run() async throws {
         do {
             logger.info("Initializing BreezeLambdaAPIHandler...")
-            let breezeApi = try await BreezeLambdaAPIHandler<T>(service: dynamoDBService)
+            guard let dbManager = await dynamoDBService.dbManager else {
+                throw BreezeLambdaAPIError.invalidService
+            }
+            let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: operation)
             self.breezeApi = breezeApi
             logger.info("Starting BreezeLambdaAPIHandler...")
             let runtime = LambdaRuntime(body: handler)

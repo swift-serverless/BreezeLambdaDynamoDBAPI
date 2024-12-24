@@ -58,6 +58,15 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
         return nil
     }
     
+    static func operation() throws -> BreezeOperation {
+        guard let handler = Lambda.env("_HANDLER"),
+              let operation = BreezeOperation(handler: handler)
+        else {
+            throw BreezeLambdaAPIError.invalidHandler
+        }
+        return operation
+    }
+    
     public init(dbTimeout: Int64 = 30) throws {
         do {
             self.timeout = .seconds(dbTimeout)
@@ -78,6 +87,7 @@ public actor BreezeLambdaAPIService<T: BreezeCodable>: Service {
             self.dynamoDBService = BreezeDynamoDBService(config: config, serviceConfig: serviceConfig)
             self.breezeLambdaService = BreezeLambdaService<T>(
                 dynamoDBService: dynamoDBService,
+                operation: try Self.operation(),
                 logger: logger
             )
             self.serviceGroup = ServiceGroup(

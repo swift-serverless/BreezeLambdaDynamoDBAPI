@@ -26,21 +26,23 @@ import ServiceLifecycleTestKit
 import Foundation
 import Logging
 import Testing
+import SotoDynamoDB
 
 extension Lambda {
     
     enum TestState {
         case none
         case running
-        case result(BreezeLambdaAPIHandler.Output)
+        case result(BreezeLambdaHandler.Output)
     }
     
     static func test<T: BreezeCodable>(
-        _ handlerType: BreezeLambdaAPIHandler<T>.Type,
+        _ handlerType: BreezeLambdaHandler<T>.Type,
         config: BreezeDynamoDBConfig,
+        operation: BreezeOperation,
         response: (any BreezeCodable)?,
         keyedResponse: (any BreezeCodable)?,
-        with event: BreezeLambdaAPIHandler.Event) async throws -> BreezeLambdaAPIHandler<T>.Output {
+        with event: BreezeLambdaHandler.Event) async throws -> BreezeLambdaHandler<T>.Output {
             
         let logger = Logger(label: "evaluateHandler")
         let decoder = JSONDecoder()
@@ -48,12 +50,10 @@ extension Lambda {
         
         return try await testGracefulShutdown { gracefulShutdownTestTrigger in
             let httpClientService = BreezeHTTPClientService(timeout: .seconds(1), logger: logger)
-            let serviceConfig = BreezeClientServiceConfig(
-                httpClientService: httpClientService,
-                logger: logger)
-            let dynamoDBService = BreezeDynamoDBService(config: config, serviceConfig: serviceConfig, DBManagingType: BreezeDynamoDBServiceMock.self)
-        
-            let sut = try await handlerType.init(service: dynamoDBService)
+            let awsClient = AWSClient()
+            let db = SotoDynamoDB.DynamoDB(client: awsClient)
+            let dbManager = BreezeDynamoDBManagerMock(db: db, tableName: config.tableName, keyName: config.keyName)
+            let sut = handlerType.init(dbManager: dbManager, operation: operation)
             
             let serviceGroup = ServiceGroup(
                 configuration: .init(
@@ -61,11 +61,6 @@ extension Lambda {
                         .init(
                             service: httpClientService,
                             successTerminationBehavior: .ignore,
-                            failureTerminationBehavior: .gracefullyShutdownGroup
-                        ),
-                        .init(
-                            service: dynamoDBService,
-                            successTerminationBehavior: .gracefullyShutdownGroup,
                             failureTerminationBehavior: .gracefullyShutdownGroup
                         )
                     ],
@@ -76,6 +71,7 @@ extension Lambda {
             let testState = try await withThrowingTaskGroup(of: TestState.self) { group in
                 group.addTask {
                     try await serviceGroup.run()
+                    try await awsClient.shutdown()
                     return TestState.running
                 }
                 
@@ -85,8 +81,7 @@ extension Lambda {
                     }
                     let closureHandler = ClosureHandler { event, context in
                         //Inject Mock Response
-                        let dbManager = await dynamoDBService.dbManager as? BreezeDynamoDBServiceMock
-                        await dbManager?.setupMockResponse(response: response, keyedResponse: keyedResponse)
+                        await dbManager.setupMockResponse(response: response, keyedResponse: keyedResponse)
                 
                         // Execute Handler
                         return try await sut.handle(event, context: context)
@@ -111,7 +106,7 @@ extension Lambda {
                     try await handler.handle(event, responseWriter: writer, context: context)
                     
                     let result = await writer.output ?? ByteBuffer()
-                    return TestState.result(try decoder.decode(BreezeLambdaAPIHandler<T>.Output.self, from: result))
+                    return TestState.result(try decoder.decode(BreezeLambdaHandler<T>.Output.self, from: result))
                 }
                 for try await value in group {
                     switch value {

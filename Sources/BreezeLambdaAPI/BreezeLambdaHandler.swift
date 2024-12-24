@@ -17,18 +17,18 @@ import AWSLambdaRuntime
 import BreezeDynamoDBService
 import Logging
 
-struct BreezeLambdaHandler<T: BreezeCodable> {
+struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
     typealias Event = APIGatewayV2Request
     typealias Output = APIGatewayV2Response
 
-    let service: BreezeDynamoDBManaging
+    let dbManager: BreezeDynamoDBManaging
     let operation: BreezeOperation
 
     var keyName: String {
-        self.service.keyName
+        self.dbManager.keyName
     }
-
-    func handle(context: AWSLambdaRuntimeCore.LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
+    
+    public func handle(_ event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
         switch self.operation {
         case .create:
             return await self.createLambdaHandler(context: context, event: event)
@@ -49,7 +49,7 @@ struct BreezeLambdaHandler<T: BreezeCodable> {
             return APIGatewayV2Response(with: error, statusCode: .forbidden)
         }
         do {
-            let result: T = try await service.createItem(item: item)
+            let result: T = try await dbManager.createItem(item: item)
             return APIGatewayV2Response(with: result, statusCode: .created)
         } catch {
             return APIGatewayV2Response(with: error, statusCode: .forbidden)
@@ -62,7 +62,7 @@ struct BreezeLambdaHandler<T: BreezeCodable> {
             return APIGatewayV2Response(with: error, statusCode: .forbidden)
         }
         do {
-            let result: T = try await service.readItem(key: key)
+            let result: T = try await dbManager.readItem(key: key)
             return APIGatewayV2Response(with: result, statusCode: .ok)
         } catch {
             return APIGatewayV2Response(with: error, statusCode: .notFound)
@@ -75,7 +75,7 @@ struct BreezeLambdaHandler<T: BreezeCodable> {
             return APIGatewayV2Response(with: error, statusCode: .forbidden)
         }
         do {
-            let result: T = try await service.updateItem(item: item)
+            let result: T = try await dbManager.updateItem(item: item)
             return APIGatewayV2Response(with: result, statusCode: .ok)
         } catch {
             return APIGatewayV2Response(with: error, statusCode: .notFound)
@@ -97,7 +97,7 @@ struct BreezeLambdaHandler<T: BreezeCodable> {
         }
         do {
             let simpleItem = SimpleItem(key: key, createdAt: createdAt, updatedAt: updatedAt)
-            try await self.service.deleteItem(item: simpleItem)
+            try await self.dbManager.deleteItem(item: simpleItem)
             return APIGatewayV2Response(with: BreezeEmptyResponse(), statusCode: .ok)
         } catch {
             return APIGatewayV2Response(with: error, statusCode: .notFound)
@@ -108,7 +108,7 @@ struct BreezeLambdaHandler<T: BreezeCodable> {
         do {
             let key = event.queryStringParameters?["exclusiveStartKey"]
             let limit: Int? = event.queryStringParameter("limit")
-            let result: ListResponse<T> = try await service.listItems(key: key, limit: limit)
+            let result: ListResponse<T> = try await dbManager.listItems(key: key, limit: limit)
             return APIGatewayV2Response(with: result, statusCode: .ok)
         } catch {
             return APIGatewayV2Response(with: error, statusCode: .forbidden)

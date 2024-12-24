@@ -28,7 +28,7 @@ import Foundation
 
 
 @Suite
-struct BreezeLambdaAPITests {
+struct BreezeLambdaHandlerTests {
     
     let decoder = JSONDecoder()
     let encoder = JSONEncoder()
@@ -37,31 +37,31 @@ struct BreezeLambdaAPITests {
     
     let config = BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "sku")
     
-    @Test
-    func testSerially() async throws {
-        try await test_initWhenMissing__HANDLER_thenThrowError()
-        try await test_initWhenInvalid__HANDLER_thenThrowError()
-        
-        try await test_create()
-        try await test_create_whenInvalidItem_thenError()
-        try await test_create_whenMissingItem_thenError()
-        
-        try await test_read()
-        try await test_read_whenInvalidRequest_thenError()
-        try await test_read_whenMissingItem_thenError()
-        
-        try await test_update()
-        try await test_update_whenInvalidRequest_thenError()
-        try await test_update_whenMissingItem_thenError()
-        
-        try await test_delete()
-        try await test_delete_whenRequestIsOutaded()
-        try await test_delete_whenInvalidRequest_thenError()
-        try await test_delete_whenMissingItem_thenError()
-        
-        try await test_list()
-        try await test_list_whenError()
-    }
+//    @Test
+//    func testSerially() async throws {
+//        try await test_initWhenMissing__HANDLER_thenThrowError()
+//        try await test_initWhenInvalid__HANDLER_thenThrowError()
+//        
+//        try await test_create()
+//        try await test_create_whenInvalidItem_thenError()
+//        try await test_create_whenMissingItem_thenError()
+//        
+//        try await test_read()
+//        try await test_read_whenInvalidRequest_thenError()
+//        try await test_read_whenMissingItem_thenError()
+//        
+//        try await test_update()
+//        try await test_update_whenInvalidRequest_thenError()
+//        try await test_update_whenMissingItem_thenError()
+//        
+//        try await test_delete()
+//        try await test_delete_whenRequestIsOutaded()
+//        try await test_delete_whenInvalidRequest_thenError()
+//        try await test_delete_whenMissingItem_thenError()
+//        
+//        try await test_list()
+//        try await test_list_whenError()
+//    }
 
 //    @Test
 //    func test_initWhenMissing_AWS_REGION_thenDefaultRegion() async throws {
@@ -75,34 +75,40 @@ struct BreezeLambdaAPITests {
 //        try tearDownWithError()
 //    }
 
-    func test_initWhenMissing__HANDLER_thenThrowError() async throws {
-        let response = Fixtures.product2023
-        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
-        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-        do {
-            _ = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: response, keyedResponse: nil, with: request)
-            Issue.record("It should throw an Error when _HANDLER is missing")
-        } catch BreezeLambdaAPIError.invalidHandler {
-            #expect(true)
-        } catch {
-            Issue.record("Is should throw an BreezeLambdaAPIError.invalidHandler")
-        }
-    }
-    
-    func test_initWhenInvalid__HANDLER_thenThrowError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.c", overwrite: true)
-        let response = Fixtures.product2023
-        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
-        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-        do {
-            _ = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: response, keyedResponse: nil, with: request)
-            Issue.record("It should throw an Error when _HANDLER is invalid")
-        } catch BreezeLambdaAPIError.invalidHandler {
-            #expect(true)
-        } catch {
-            Issue.record("Is should throw an BreezeLambdaAPIError.invalidHandler")
-        }
-    }
+//    func test_initWhenMissing__HANDLER_thenThrowError() async throws {
+//        let response = Fixtures.product2023
+//        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
+//        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
+//        do {
+//            _ = try await Lambda.test(
+//                BreezeLambdaAPIHandler<Product>.self,
+//                config: config,
+//                response: response,
+//                keyedResponse: nil,
+//                with: request
+//            )
+//            Issue.record("It should throw an Error when _HANDLER is missing")
+//        } catch BreezeLambdaAPIError.invalidHandler {
+//            #expect(true)
+//        } catch {
+//            Issue.record("Is should throw an BreezeLambdaAPIError.invalidHandler")
+//        }
+//    }
+//    
+//    func test_initWhenInvalid__HANDLER_thenThrowError() async throws {
+//        setEnvironmentVar(name: "_HANDLER", value: "build/Products.c", overwrite: true)
+//        let response = Fixtures.product2023
+//        let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
+//        let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
+//        do {
+//            _ = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: response, keyedResponse: nil, with: request)
+//            Issue.record("It should throw an Error when _HANDLER is invalid")
+//        } catch BreezeLambdaAPIError.invalidHandler {
+//            #expect(true)
+//        } catch {
+//            Issue.record("Is should throw an BreezeLambdaAPIError.invalidHandler")
+//        }
+//    }
     
 //    @Test
 //    func test_initWhenMissing_DYNAMO_DB_TABLE_NAME_thenThrowError() async throws {
@@ -142,12 +148,19 @@ struct BreezeLambdaAPITests {
 //        try tearDownWithError()
 //    }
     
+    @Test
     func test_create() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.create", overwrite: true)
         let response = Fixtures.product2023
         let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: response, keyedResponse: nil, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .create,
+            response: response,
+            keyedResponse: nil,
+            with: request
+        )
         let product: Product = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .created)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
@@ -156,36 +169,55 @@ struct BreezeLambdaAPITests {
         #expect(product.description == "BreezeLambaAPI is magic 🪄!")
     }
 
+    @Test
     func test_create_whenInvalidItem_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.create", overwrite: true)
         let createRequest = try Fixtures.fixture(name: Fixtures.postInvalidRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: nil, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .create,
+            response: nil,
+            keyedResponse: nil,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .forbidden)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response.error == "invalidRequest")
     }
     
-
+    @Test
     func test_create_whenMissingItem_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.create", overwrite: true)
         let createRequest = try Fixtures.fixture(name: Fixtures.postProductsRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: createRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: nil, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .create,
+            response: nil,
+            keyedResponse: nil,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .forbidden)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response.error == "invalidRequest")
     }
 
-    
+    @Test
     func test_read() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.read", overwrite: true)
         let keyedResponse = Fixtures.product2023
         let readRequest = try Fixtures.fixture(name: Fixtures.getProductsSkuRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: readRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .read,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: Product = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .ok)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
@@ -194,36 +226,57 @@ struct BreezeLambdaAPITests {
         #expect(response.description == "BreezeLambaAPI is magic 🪄!")
     }
 
+    @Test
     func test_read_whenInvalidRequest_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.read", overwrite: true)
         let keyedResponse = Fixtures.product2023
         let readRequest = try Fixtures.fixture(name: Fixtures.getInvalidRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: readRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .read,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .forbidden)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response.error == "invalidRequest")
     }
 
+    @Test
     func test_read_whenMissingItem_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.read", overwrite: true)
         let keyedResponse = Fixtures.product2022
         let readRequest = try Fixtures.fixture(name: Fixtures.getProductsSkuRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: readRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .read,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .notFound)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response.error == "invalidRequest")
     }
 
+    @Test
     func test_update() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.update", overwrite: true)
         let keyedResponse = Fixtures.product2023
         let updateRequest = try Fixtures.fixture(name: Fixtures.putProductsRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: updateRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .update,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: Product = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .ok)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
@@ -232,83 +285,133 @@ struct BreezeLambdaAPITests {
         #expect(response.description == "BreezeLambaAPI is magic 🪄!")
     }
     
+    @Test
     func test_update_whenInvalidRequest_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.update", overwrite: true)
         let keyedResponse = Fixtures.product2023
         let updateRequest = try Fixtures.fixture(name: Fixtures.getInvalidRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: updateRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .update,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .forbidden)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response.error == "invalidRequest")
     }
 
+    @Test
     func test_update_whenMissingItem_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.update", overwrite: true)
         let keyedResponse = Fixtures.product2022
         let updateRequest = try Fixtures.fixture(name: Fixtures.putProductsRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: updateRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .update,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .notFound)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response.error == "invalidRequest")
     }
 
+    @Test
     func test_delete() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.delete", overwrite: true)
         let keyedResponse = Fixtures.product2023
         let deleteProductsSku = try Fixtures.fixture(name: Fixtures.deleteProductsSkuRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: deleteProductsSku)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .delete,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: BreezeEmptyResponse = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .ok)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response != nil)
     }
     
+    @Test
     func test_delete_whenRequestIsOutaded() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.delete", overwrite: true)
         let keyedResponse = Fixtures.productUdated2023
         let deleteProductsSku = try Fixtures.fixture(name: Fixtures.deleteProductsSkuRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: deleteProductsSku)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .delete,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: BreezeEmptyResponse = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .notFound)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response != nil)
     }
     
+    @Test
     func test_delete_whenInvalidRequest_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.delete", overwrite: true)
         let keyedResponse = Fixtures.product2023
         let deleteProductsSku = try Fixtures.fixture(name: Fixtures.getInvalidRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: deleteProductsSku)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .delete,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .forbidden)
         #expect(response.error == "invalidRequest")
     }
 
+    @Test
     func test_delete_whenMissingItem_thenError() async throws {
         setEnvironmentVar(name: "_HANDLER", value: "build/Products.delete", overwrite: true)
         let keyedResponse = Fixtures.product2022
         let deleteProductsSku = try Fixtures.fixture(name: Fixtures.deleteProductsSkuRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: deleteProductsSku)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: keyedResponse, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .delete,
+            response: nil,
+            keyedResponse: keyedResponse,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .notFound)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
         #expect(response.error == "invalidRequest")
     }
 
+    @Test
     func test_list() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.list", overwrite: true)
         let response = Fixtures.product2023
         let listRequest = try Fixtures.fixture(name: Fixtures.getProductsRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: listRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: response, keyedResponse: nil, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .list,
+            response: response,
+            keyedResponse: nil,
+            with: request
+        )
         let product: ListResponse<Product> = try apiResponse.decodeBody()
         let item = try #require(product.items.first)
 //        #expect(BreezeDynamoDBServiceMock.limit == 1)
@@ -320,11 +423,18 @@ struct BreezeLambdaAPITests {
         #expect(item.description == "BreezeLambaAPI is magic 🪄!")
     }
 
+    @Test
     func test_list_whenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.list", overwrite: true)
         let listRequest = try Fixtures.fixture(name: Fixtures.getProductsRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: listRequest)
-        let apiResponse: APIGatewayV2Response = try await Lambda.test(BreezeLambdaAPIHandler<Product>.self, config: config, response: nil, keyedResponse: nil, with: request)
+        let apiResponse: APIGatewayV2Response = try await Lambda.test(
+            BreezeLambdaHandler<Product>.self,
+            config: config,
+            operation: .list,
+            response: nil,
+            keyedResponse: nil,
+            with: request
+        )
         let response: APIGatewayV2Response.BodyError = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .forbidden)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])

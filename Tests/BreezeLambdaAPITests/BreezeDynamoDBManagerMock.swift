@@ -16,7 +16,7 @@ import BreezeDynamoDBService
 @testable import BreezeLambdaAPI
 import SotoDynamoDB
 
-actor BreezeDynamoDBServiceMock: BreezeDynamoDBManaging {
+actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
     let keyName: String
 
     private var response: (any BreezeCodable)?

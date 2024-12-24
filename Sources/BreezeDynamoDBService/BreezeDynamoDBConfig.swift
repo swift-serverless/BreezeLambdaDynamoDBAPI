@@ -27,8 +27,8 @@ public struct BreezeDynamoDBConfig: Sendable {
         self.endpoint = endpoint
     }
     
-    let region: Region
-    let tableName: String
-    let keyName: String
-    let endpoint: String?
+    public let region: Region
+    public let tableName: String
+    public let keyName: String
+    public let endpoint: String?
 }
