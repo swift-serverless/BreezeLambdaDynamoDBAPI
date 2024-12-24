@@ -82,6 +82,7 @@ let package = Package(
         .testTarget(
             name: "BreezeDynamoDBServiceTests",
             dependencies: [
+                .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
                 .product(name: "ServiceLifecycleTestKit", package: "swift-service-lifecycle"),
                 "BreezeDynamoDBService"

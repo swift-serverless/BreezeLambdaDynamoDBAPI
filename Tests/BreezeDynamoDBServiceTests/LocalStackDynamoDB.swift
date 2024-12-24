@@ -13,12 +13,13 @@
 //    limitations under the License.
 
 import SotoDynamoDB
+import AWSLambdaRuntime
 import Logging
 
 enum LocalStackDynamoDB {
     
     static let endpoint: String = {
-        if let localstack = getEnvironmentVar(name: "LOCALSTACK_ENDPOINT"),
+        if let localstack = Lambda.env("LOCALSTACK_ENDPOINT"),
            !localstack.isEmpty {
             return localstack
         }
@@ -26,7 +27,7 @@ enum LocalStackDynamoDB {
     }()
 
     public static let logger: Logger = {
-        if let loggingLevel = getEnvironmentVar(name: "AWS_LOG_LEVEL") {
+        if let loggingLevel = Lambda.env("AWS_LOG_LEVEL") {
             if let logLevel = Logger.Level(rawValue: loggingLevel.lowercased()) {
                 var logger = Logger(label: "breeze")
                 logger.logLevel = logLevel

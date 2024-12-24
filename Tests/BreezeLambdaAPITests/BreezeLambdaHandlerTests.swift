@@ -269,7 +269,6 @@ struct BreezeLambdaHandlerTests {
 
     @Test
     func test_delete_whenMissingItem_thenError() async throws {
-        setEnvironmentVar(name: "_HANDLER", value: "build/Products.delete", overwrite: true)
         let keyedResponse = Fixtures.product2022
         let deleteProductsSku = try Fixtures.fixture(name: Fixtures.deleteProductsSkuRequest, type: "json")
         let request = try decoder.decode(APIGatewayV2Request.self, from: deleteProductsSku)
