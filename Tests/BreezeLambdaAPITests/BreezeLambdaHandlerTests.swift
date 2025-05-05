@@ -13,13 +13,12 @@
 //    limitations under the License.
 
 import AWSLambdaEvents
-import AWSLambdaRuntime
+@testable import AWSLambdaRuntime
 import ServiceLifecycle
 import ServiceLifecycleTestKit
 import BreezeDynamoDBService
 import BreezeHTTPClientService
 @testable import BreezeLambdaAPI
-@testable import AWSLambdaRuntimeCore
 import Testing
 import Logging
 import AsyncHTTPClient

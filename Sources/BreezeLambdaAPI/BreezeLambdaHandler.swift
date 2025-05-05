@@ -43,7 +43,7 @@ struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
         }
     }
 
-    func createLambdaHandler(context: AWSLambdaRuntimeCore.LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
+    func createLambdaHandler(context: LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
         guard let item: T = try? event.bodyObject() else {
             let error = BreezeLambdaAPIError.invalidRequest
             return APIGatewayV2Response(with: error, statusCode: .forbidden)
@@ -56,7 +56,7 @@ struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
         }
     }
 
-    func readLambdaHandler(context: AWSLambdaRuntimeCore.LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
+    func readLambdaHandler(context: LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
         guard let key = event.pathParameters?[keyName] else {
             let error = BreezeLambdaAPIError.invalidRequest
             return APIGatewayV2Response(with: error, statusCode: .forbidden)
@@ -69,7 +69,7 @@ struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
         }
     }
 
-    func updateLambdaHandler(context: AWSLambdaRuntimeCore.LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
+    func updateLambdaHandler(context: LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
         guard let item: T = try? event.bodyObject() else {
             let error = BreezeLambdaAPIError.invalidRequest
             return APIGatewayV2Response(with: error, statusCode: .forbidden)
@@ -88,7 +88,7 @@ struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
         var updatedAt: String?
     }
 
-    func deleteLambdaHandler(context: AWSLambdaRuntimeCore.LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
+    func deleteLambdaHandler(context: LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
         guard let key = event.pathParameters?[keyName],
               let createdAt = event.queryStringParameters?["createdAt"],
               let updatedAt = event.queryStringParameters?["updatedAt"] else {
@@ -104,7 +104,7 @@ struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
         }
     }
 
-    func listLambdaHandler(context: AWSLambdaRuntimeCore.LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
+    func listLambdaHandler(context: LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
         do {
             let key = event.queryStringParameters?["exclusiveStartKey"]
             let limit: Int? = event.queryStringParameter("limit")

@@ -72,7 +72,7 @@ let package = Package(
         .testTarget(
             name: "BreezeLambdaAPITests",
             dependencies: [
-                .product(name: "AWSLambdaTesting", package: "swift-aws-lambda-runtime"),
+                .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
                 .product(name: "ServiceLifecycleTestKit", package: "swift-service-lifecycle"),
                 "BreezeLambdaAPI"

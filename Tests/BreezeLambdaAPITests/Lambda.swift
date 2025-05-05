@@ -13,12 +13,10 @@
 //    limitations under the License.
 
 import AWSLambdaEvents
-import AWSLambdaRuntime
+@testable import AWSLambdaRuntime
 import BreezeDynamoDBService
 import BreezeHTTPClientService
 @testable import BreezeLambdaAPI
-@testable import AWSLambdaRuntimeCore
-import AWSLambdaTesting
 import Logging
 import NIO
 import ServiceLifecycle
@@ -29,7 +27,7 @@ import Testing
 import SotoDynamoDB
 import AsyncHTTPClient
 
-extension Lambda {
+extension AWSLambdaRuntime.Lambda {
     
     static func test<T: BreezeCodable>(
         _ handlerType: BreezeLambdaHandler<T>.Type,
