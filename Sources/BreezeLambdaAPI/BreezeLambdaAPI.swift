@@ -15,33 +15,31 @@
 import SotoDynamoDB
 import ServiceLifecycle
 import BreezeDynamoDBService
-import BreezeHTTPClientService
 import AWSLambdaRuntime
 
 public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     
     let logger = Logger(label: "service-group-breeze-lambda-api")
     let timeout: TimeAmount
-    let httpClientService: BreezeHTTPClientServing
     let dynamoDBService: BreezeDynamoDBServing
     let breezeLambdaService: BreezeLambdaService<T>
     private let serviceGroup: ServiceGroup
     private let apiConfig: any APIConfiguring
     
-    public init(apiConfig: APIConfiguring = BreezeAPIConfiguration()) throws {
+    public init(apiConfig: APIConfiguring = BreezeAPIConfiguration()) async throws {
         do {
             self.apiConfig = apiConfig
             self.timeout = .seconds(apiConfig.dbTimeout)
-            self.httpClientService = BreezeHTTPClientService(
-                timeout: timeout,
-                logger: logger
-            )
             let config = try apiConfig.getConfig()
-            let serviceConfig = BreezeClientServiceConfig(
-                httpClientService: httpClientService,
+            let httpConfig = BreezeHTTPClientConfig(
+                timeout: .seconds(60),
                 logger: logger
             )
-            self.dynamoDBService = BreezeDynamoDBService(config: config, serviceConfig: serviceConfig)
+            self.dynamoDBService = await BreezeDynamoDBService(
+                config: config,
+                httpConfig: httpConfig,
+                logger: logger
+            )
             self.breezeLambdaService = BreezeLambdaService<T>(
                 dynamoDBService: dynamoDBService,
                 operation: try apiConfig.operation(),
@@ -51,21 +49,12 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
                 configuration: .init(
                     services: [
                         .init(
-                            service: httpClientService,
-                            successTerminationBehavior: .ignore,
-                            failureTerminationBehavior: .gracefullyShutdownGroup
-                        ),
-                        .init(
-                            service: dynamoDBService,
-                            successTerminationBehavior: .gracefullyShutdownGroup,
-                            failureTerminationBehavior: .gracefullyShutdownGroup
-                        ),
-                        .init(
                             service: breezeLambdaService,
                             successTerminationBehavior: .gracefullyShutdownGroup,
                             failureTerminationBehavior: .gracefullyShutdownGroup
                         )
                     ],
+                    gracefulShutdownSignals: [.sigterm],
                     logger: logger
                 )
             )

@@ -17,10 +17,6 @@ let package = Package(
             targets: ["BreezeDynamoDBService"]
         ),
         .library(
-            name: "BreezeHTTPClientService",
-            targets: ["BreezeHTTPClientService"]
-        ),
-        .library(
             name: "BreezeLambdaAPI",
             targets: ["BreezeLambdaAPI"]
         ),
@@ -35,7 +31,6 @@ let package = Package(
         .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.2"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.24.0"),
     ],
     targets: [
         .executableTarget(
@@ -45,19 +40,11 @@ let package = Package(
             ]
         ),
         .target(
-            name: "BreezeHTTPClientService",
-            dependencies: [
-                .product(name: "AsyncHTTPClient", package: "async-http-client"),
-                .product(name: "Logging", package: "swift-log")
-            ]
-        ),
-        .target(
             name: "BreezeDynamoDBService",
             dependencies: [
                 .product(name: "SotoDynamoDB", package: "soto"),
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
                 .product(name: "Logging", package: "swift-log"),
-                "BreezeHTTPClientService"
             ]
         ),
         .target(
@@ -86,14 +73,6 @@ let package = Package(
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
                 .product(name: "ServiceLifecycleTestKit", package: "swift-service-lifecycle"),
                 "BreezeDynamoDBService"
-            ]
-        ),
-        .testTarget(
-            name: "BreezeHTTPClientServiceTests",
-            dependencies: [
-                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
-                .product(name: "ServiceLifecycleTestKit", package: "swift-service-lifecycle"),
-                "BreezeHTTPClientService"
             ]
         )
     ]

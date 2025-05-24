@@ -13,17 +13,18 @@
 //    limitations under the License.
 
 import Logging
+import NIOCore
 
-public struct BreezeClientServiceConfig: Sendable {
-    
-    public let httpClientService: BreezeHTTPClientServing
-    public let logger: Logger
-    
-    public init(
-        httpClientService: BreezeHTTPClientServing,
-        logger: Logger
-    ) {
-        self.httpClientService = httpClientService
+public enum BreezeClientServiceError: Error {
+    case invalidHttpClient
+}
+
+public struct BreezeHTTPClientConfig: Sendable {
+    public init(timeout: TimeAmount, logger: Logger) {
+        self.timeout = timeout
         self.logger = logger
     }
+    
+    public let timeout: TimeAmount
+    public let logger: Logger
 }

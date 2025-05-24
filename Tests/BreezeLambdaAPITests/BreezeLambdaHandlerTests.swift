@@ -17,7 +17,6 @@ import AWSLambdaEvents
 import ServiceLifecycle
 import ServiceLifecycleTestKit
 import BreezeDynamoDBService
-import BreezeHTTPClientService
 @testable import BreezeLambdaAPI
 import Testing
 import Logging

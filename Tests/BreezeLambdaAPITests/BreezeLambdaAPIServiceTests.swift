@@ -39,17 +39,17 @@ struct BreezeLambdaAPIServiceTests {
     func test_breezeLambdaAPIService_whenValidEnvironment() async throws {
         try await testGracefulShutdown { gracefulShutdownTestTrigger in
             try await withThrowingTaskGroup(of: Void.self) { group in
-                let sut = try BreezeLambdaAPI<Product>(apiConfig: APIConfiguration())
+                let sut = try await BreezeLambdaAPI<Product>(apiConfig: APIConfiguration())
+                group.addTask {
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                    gracefulShutdownTestTrigger.triggerGracefulShutdown()
+                }
                 group.addTask {
                     try await withGracefulShutdownHandler {
                         try await sut.run()
                     } onGracefulShutdown: {
                         logger.info("On Graceful Shutdown")
                     }
-                }
-                group.addTask {
-                    try await Task.sleep(nanoseconds: 1_000_000_000)
-                    gracefulShutdownTestTrigger.triggerGracefulShutdown()
                 }
                 group.cancelAll()
             }
@@ -61,7 +61,7 @@ struct BreezeLambdaAPIServiceTests {
         await #expect(throws: BreezeLambdaAPIError.self) {
             try await testGracefulShutdown { gracefulShutdownTestTrigger in
                 try await withThrowingTaskGroup(of: Void.self) { group in
-                    let sut = try BreezeLambdaAPI<Product>()
+                    let sut = try await BreezeLambdaAPI<Product>()
                     group.addTask {
                         try await withGracefulShutdownHandler {
                             try await sut.run()

@@ -13,75 +13,74 @@
 //    limitations under the License.
 
 import SotoDynamoDB
+import AsyncHTTPClient
 import ServiceLifecycle
-import BreezeHTTPClientService
 import Logging
 
-public protocol BreezeDynamoDBServing: Actor, Service {
+public protocol BreezeDynamoDBServing: Actor {
     func dbManager() async -> BreezeDynamoDBManaging
+    func gracefulShutdown() throws
 }
 
 public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     
-    private var _dbManager: BreezeDynamoDBManaging?
+    private let dbManager: BreezeDynamoDBManaging
     private let config: BreezeDynamoDBConfig
-    private let serviceConfig: BreezeClientServiceConfig
+    private let httpConfig: BreezeHTTPClientConfig
+    private let logger: Logger
     private let DBManagingType: BreezeDynamoDBManaging.Type
+    private var awsClient: AWSClient
+    private let httpClient: HTTPClient
     
-    public func dbManager() async -> BreezeDynamoDBManaging {
-        if let _dbManager {
-            return _dbManager
-        }
-        let httpClient = await serviceConfig.httpClientService.httpClient
-        let awsClient = AWSClient(httpClient: httpClient)
-        self.awsClient = awsClient
+    public init(
+        config: BreezeDynamoDBConfig,
+        httpConfig: BreezeHTTPClientConfig,
+        logger: Logger,
+        DBManagingType: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
+    ) async {
+        logger.info("Init DynamoDBService with config...")
+        logger.info("region: \(config.region)")
+        logger.info("tableName: \(config.tableName)")
+        logger.info("keyName: \(config.keyName)")
+        
+        self.config = config
+        self.httpConfig = httpConfig
+        self.logger = logger
+        self.DBManagingType = DBManagingType
+        let timeout = HTTPClient.Configuration.Timeout(
+            connect: httpConfig.timeout,
+            read: httpConfig.timeout
+        )
+        let configuration = HTTPClient.Configuration(timeout: timeout)
+        self.httpClient = HTTPClient(
+            eventLoopGroupProvider: .singleton,
+            configuration: configuration
+        )
+        self.awsClient = AWSClient(httpClient: httpClient)
         let db = SotoDynamoDB.DynamoDB(
             client: awsClient,
             region: config.region,
             endpoint: config.endpoint
         )
-        let dbManager = DBManagingType.init(
+        self.dbManager = DBManagingType.init(
             db: db,
             tableName: config.tableName,
             keyName: config.keyName
         )
-        _dbManager = dbManager
-        return dbManager
+        logger.info("DBManager is ready.")
     }
     
-    public init(
-        config: BreezeDynamoDBConfig,
-        serviceConfig: BreezeClientServiceConfig,
-        DBManagingType: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
-    ) {
-        self.config = config
-        self.serviceConfig = serviceConfig
-        self.DBManagingType = DBManagingType
+    public func dbManager() async -> BreezeDynamoDBManaging {
+        self.dbManager
     }
     
-    private var awsClient: AWSClient?
-    
-    private var logger: Logger {
-        serviceConfig.logger
-    }
-    
-    public func run() async throws {
-        logger.info("Starting DynamoDBService...")
-        logger.info("DynamoDBService is running with config...")
-        logger.info("region: \(config.region)")
-        logger.info("tableName: \(config.tableName)")
-        logger.info("keyName: \(config.keyName)")
-        
-        try await gracefulShutdown()
-        
+    public func gracefulShutdown() throws {
         logger.info("Stopping DynamoDBService...")
-        try await awsClient?.shutdown()
-        self.awsClient = nil
+        try awsClient.syncShutdown()
         logger.info("DynamoDBService is stopped.")
-    }
-    
-    deinit {
-        try? awsClient?.syncShutdown()
+        logger.info("Stopping HTTPClient...")
+        try httpClient.syncShutdown()
+        logger.info("HTTPClient is stopped.")
     }
 }
 

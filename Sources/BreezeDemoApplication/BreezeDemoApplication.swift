@@ -48,7 +48,7 @@ struct APIConfiguration: APIConfiguring {
 struct BreezeDemoApplication {
     static func main() async throws {
         do {
-            let lambdaAPIService = try BreezeLambdaAPI<Item>(apiConfig: APIConfiguration())
+            let lambdaAPIService = try await BreezeLambdaAPI<Item>(apiConfig: APIConfiguration())
             try await lambdaAPIService.run()
         } catch {
             print(error.localizedDescription)

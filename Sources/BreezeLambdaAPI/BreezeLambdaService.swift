@@ -40,18 +40,24 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
     }
     
     func run() async throws {
-        do {
-            logger.info("Starting BreezeLambdaService...")
-            let dbManager = await dynamoDBService.dbManager()
-            let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: operation)
-            self.breezeApi = breezeApi
-            logger.info("Starting BreezeLambdaService...")
-            let runtime = LambdaRuntime(body: handler)
-            try await runtime.run()
-            logger.info("BreezeLambdaService stopped.")
-        } catch {
-            logger.error("\(error.localizedDescription)")
-            throw error
+        let dbManager = await dynamoDBService.dbManager()
+        try await withGracefulShutdownHandler {
+            do {
+                let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: operation)
+                self.breezeApi = breezeApi
+                logger.info("Starting BreezeLambdaService...")
+                logger.info("Starting BreezeLambdaService...")
+                let runtime = LambdaRuntime(body: handler)
+                try await runtime.run()
+                logger.info("BreezeLambdaService stopped.")
+            } catch {
+                logger.error("\(error.localizedDescription)")
+                throw error
+            }
+        } onGracefulShutdown: {
+            Task {
+                try await self.dynamoDBService.gracefulShutdown()
+            }
         }
     }
 }

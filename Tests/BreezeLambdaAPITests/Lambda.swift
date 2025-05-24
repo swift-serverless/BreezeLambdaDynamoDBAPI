@@ -15,7 +15,6 @@
 import AWSLambdaEvents
 @testable import AWSLambdaRuntime
 import BreezeDynamoDBService
-import BreezeHTTPClientService
 @testable import BreezeLambdaAPI
 import Logging
 import NIO
