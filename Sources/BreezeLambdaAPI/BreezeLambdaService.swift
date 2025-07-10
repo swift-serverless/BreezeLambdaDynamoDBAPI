@@ -19,6 +19,11 @@ import BreezeDynamoDBService
 import AWSLambdaRuntime
 import AWSLambdaEvents
 import Logging
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
@@ -49,14 +54,16 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
                 logger.info("Starting BreezeLambdaService...")
                 let runtime = LambdaRuntime(body: handler)
                 try await runtime.run()
-                logger.info("BreezeLambdaService stopped.")
             } catch {
                 logger.error("\(error.localizedDescription)")
                 throw error
             }
         } onGracefulShutdown: {
             Task {
+                self.logger.info("Gracefully stoping BreezeLambdaService ...")
                 try await self.dynamoDBService.gracefulShutdown()
+                self.logger.info("BreezeLambdaService stopped.")
+                exit(EXIT_SUCCESS)
             }
         }
     }

@@ -20,11 +20,15 @@ import Logging
 import NIO
 import ServiceLifecycle
 import ServiceLifecycleTestKit
-import Foundation
 import Logging
 import Testing
 import SotoDynamoDB
 import AsyncHTTPClient
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 extension AWSLambdaRuntime.Lambda {
     

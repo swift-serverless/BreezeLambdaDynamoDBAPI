@@ -25,10 +25,7 @@ public protocol BreezeDynamoDBServing: Actor {
 public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     
     private let dbManager: BreezeDynamoDBManaging
-    private let config: BreezeDynamoDBConfig
-    private let httpConfig: BreezeHTTPClientConfig
     private let logger: Logger
-    private let DBManagingType: BreezeDynamoDBManaging.Type
     private var awsClient: AWSClient
     private let httpClient: HTTPClient
     
@@ -42,11 +39,8 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
         logger.info("region: \(config.region)")
         logger.info("tableName: \(config.tableName)")
         logger.info("keyName: \(config.keyName)")
-        
-        self.config = config
-        self.httpConfig = httpConfig
         self.logger = logger
-        self.DBManagingType = DBManagingType
+        
         let timeout = HTTPClient.Configuration.Timeout(
             connect: httpConfig.timeout,
             read: httpConfig.timeout
@@ -71,7 +65,8 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     }
     
     public func dbManager() async -> BreezeDynamoDBManaging {
-        self.dbManager
+        logger.info("Starting DynamoDBService...")
+        return self.dbManager
     }
     
     public func gracefulShutdown() throws {

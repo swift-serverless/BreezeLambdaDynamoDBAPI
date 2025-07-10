@@ -1,5 +1,5 @@
 {
-  "originHash" : "672f8141a46f0621c29e23ab11f1efa73c11bdecea3447837c9f1766e045082a",
+  "originHash" : "cfd64613639f16e5d746e97a837e99292baf72475b0d78f40b33e4990d4251d9",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -85,7 +85,7 @@
     {
       "identity" : "swift-aws-lambda-runtime",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swift-server/swift-aws-lambda-runtime.git",
+      "location" : "https://github.com/andrea-scuderi/swift-aws-lambda-runtime.git",
       "state" : {
         "branch" : "main",
         "revision" : "5924fb6e75b76d45bf427e02c0017d733b235903"

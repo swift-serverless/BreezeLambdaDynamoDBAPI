@@ -12,7 +12,11 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 extension DateFormatter {
     static var iso8061: DateFormatter {

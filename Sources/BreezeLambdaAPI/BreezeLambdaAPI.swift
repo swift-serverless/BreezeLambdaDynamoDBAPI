@@ -21,8 +21,6 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     
     let logger = Logger(label: "service-group-breeze-lambda-api")
     let timeout: TimeAmount
-    let dynamoDBService: BreezeDynamoDBServing
-    let breezeLambdaService: BreezeLambdaService<T>
     private let serviceGroup: ServiceGroup
     private let apiConfig: any APIConfiguring
     
@@ -35,28 +33,20 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
                 timeout: .seconds(60),
                 logger: logger
             )
-            self.dynamoDBService = await BreezeDynamoDBService(
+            let dynamoDBService = await BreezeDynamoDBService(
                 config: config,
                 httpConfig: httpConfig,
                 logger: logger
             )
-            self.breezeLambdaService = BreezeLambdaService<T>(
+            let breezeLambdaService = BreezeLambdaService<T>(
                 dynamoDBService: dynamoDBService,
                 operation: try apiConfig.operation(),
                 logger: logger
             )
             self.serviceGroup = ServiceGroup(
-                configuration: .init(
-                    services: [
-                        .init(
-                            service: breezeLambdaService,
-                            successTerminationBehavior: .gracefullyShutdownGroup,
-                            failureTerminationBehavior: .gracefullyShutdownGroup
-                        )
-                    ],
-                    gracefulShutdownSignals: [.sigterm],
-                    logger: logger
-                )
+                services: [breezeLambdaService],
+                gracefulShutdownSignals: [.sigterm, .sigint],
+                logger: logger
             )
         } catch {
             logger.error("\(error.localizedDescription)")
@@ -65,10 +55,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     }
     
     public func run() async throws {
-        logger.info("Starting BreezeLambdaAPIService...")
+        logger.info("Starting BreezeLambdaAPI...")
         try await serviceGroup.run()
-        logger.info("Stopping BreezeLambdaAPIService...")
-        try await gracefulShutdown()
-        logger.info("BreezeLambdaAPIService is stopped.")
     }
 }
