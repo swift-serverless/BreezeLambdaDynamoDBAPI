@@ -35,9 +35,6 @@ struct BreezeLambdaAPIServiceTests {
     
     let logger = Logger(label: "BreezeHTTPClientServiceTests")
     
-    /*
-    This test is commented out because it requires to manage the process exit(EXIT_SUCCESS).
-     
     @Test
     func test_breezeLambdaAPIService_whenValidEnvironment() async throws {
         try await testGracefulShutdown { gracefulShutdownTestTrigger in
@@ -62,12 +59,11 @@ struct BreezeLambdaAPIServiceTests {
                 }
                 for await _ in gracefulStream {
                     logger.info("Graceful shutdown stream received")
-                    await group.cancelAll()
+                    group.cancelAll()
                 }
             }
         }
     }
-    */
     
     @Test
     func test_breezeLambdaAPIService_whenInvalidEnvironment() async throws {

@@ -46,25 +46,40 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
     
     func run() async throws {
         let dbManager = await dynamoDBService.dbManager()
-        try await withGracefulShutdownHandler {
+        let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: self.operation)
+        self.breezeApi = breezeApi
+        logger.info("Starting BreezeLambdaService...")
+        let runtime = LambdaRuntime(body: handler)
+        try await runTaskWithCancellationOnGracefulShutdown {
             do {
-                let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: operation)
-                self.breezeApi = breezeApi
-                logger.info("Starting BreezeLambdaService...")
-                logger.info("Starting BreezeLambdaService...")
-                let runtime = LambdaRuntime(body: handler)
                 try await runtime.run()
             } catch {
-                logger.error("\(error.localizedDescription)")
+                self.logger.error("\(error.localizedDescription)")
                 throw error
             }
         } onGracefulShutdown: {
-            Task {
-                self.logger.info("Gracefully stoping BreezeLambdaService ...")
-                try await self.dynamoDBService.gracefulShutdown()
-                self.logger.info("BreezeLambdaService stopped.")
-                exit(EXIT_SUCCESS)
+            self.logger.info("Gracefully stoping BreezeLambdaService ...")
+            try await self.dynamoDBService.gracefulShutdown()
+            self.logger.info("BreezeLambdaService is stopped.")
+        }
+    }
+    
+    private func runTaskWithCancellationOnGracefulShutdown(
+        operation: @escaping @Sendable () async throws -> Void,
+        onGracefulShutdown: () async throws -> Void
+    ) async throws {
+        let (cancelOrGracefulShutdown, cancelOrGracefulShutdownContinuation) = AsyncStream<Void>.makeStream()
+        let task = Task {
+            try await withTaskCancellationOrGracefulShutdownHandler {
+                try await operation()
+            } onCancelOrGracefulShutdown: {
+                cancelOrGracefulShutdownContinuation.yield()
+                cancelOrGracefulShutdownContinuation.finish()
             }
+        }
+        for await _ in cancelOrGracefulShutdown {
+            try await onGracefulShutdown()
+            task.cancel()
         }
     }
 }

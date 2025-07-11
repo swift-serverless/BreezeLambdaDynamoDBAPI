@@ -57,5 +57,6 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     public func run() async throws {
         logger.info("Starting BreezeLambdaAPI...")
         try await serviceGroup.run()
+        logger.info("BreezeLambdaAPI is stopped successfully")
     }
 }
