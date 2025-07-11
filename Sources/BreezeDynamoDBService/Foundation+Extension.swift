@@ -12,11 +12,9 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
+import class Foundation.DateFormatter
+import struct Foundation.Date
+import struct Foundation.TimeZone
 
 extension DateFormatter {
     static var iso8061: DateFormatter {
