@@ -73,9 +73,10 @@ struct BreezeDynamoDBManagerTests {
         try #require(value.updatedAt?.iso8601 != nil)
         do {
             _ = try await sut.createItem(item: product2023)
-            Issue.record("It should throw conditionalCheckFailedException")
+            Issue.record("It should throw DynamoDBErrorType.conditionalCheckFailedException")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? DynamoDBErrorType)
+            #expect(dynamoDBError == .conditionalCheckFailedException)
         }
         try await removeTable(tableName: uuid)
     }
@@ -102,9 +103,10 @@ struct BreezeDynamoDBManagerTests {
         #expect(value.key == "2023")
         do {
             let _: Product = try await sut.readItem(key: "2022")
-            Issue.record("It should throw when Item is missing")
+            Issue.record("It should throw ServiceError.notfound when Item is missing")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? BreezeDynamoDBManager.ServiceError)
+            #expect(dynamoDBError == .notFound)
         }
         try await removeTable(tableName: uuid)
     }
@@ -140,16 +142,18 @@ struct BreezeDynamoDBManagerTests {
         #expect(value.updatedAt?.iso8601 != newValue.updatedAt?.iso8601)
         do {
             let _: Product = try await sut.updateItem(item: product2023)
-            Issue.record("It should throw conditionalCheckFailedException")
+            Issue.record("It should throw AWSResponseError ValidationException")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? AWSResponseError)
+            #expect(dynamoDBError.errorCode == "ValidationException")
         }
         
         do {
             let _: Product = try await sut.updateItem(item: product2022)
-            Issue.record("It should throw conditionalCheckFailedException")
+            Issue.record("It should throw AWSResponseError ValidationException")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? AWSResponseError)
+            #expect(dynamoDBError.errorCode == "ValidationException")
         }
         try await removeTable(tableName: uuid)
     }
@@ -171,9 +175,10 @@ struct BreezeDynamoDBManagerTests {
         let sut = try await givenTable(tableName: uuid)
         do {
             try await sut.deleteItem(item: product2022)
-            Issue.record("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw DynamoDBErrorType.conditionalCheckFailedException")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? DynamoDBErrorType)
+            #expect(dynamoDBError == .conditionalCheckFailedException)
         }
         try await removeTable(tableName: uuid)
     }
@@ -189,7 +194,8 @@ struct BreezeDynamoDBManagerTests {
             try await sut.deleteItem(item: value)
             Issue.record("It should throw ServiceError.missingParameters")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? BreezeDynamoDBManager.ServiceError)
+            #expect(dynamoDBError == .missingParameters)
         }
         try await removeTable(tableName: uuid)
     }
@@ -205,7 +211,8 @@ struct BreezeDynamoDBManagerTests {
             try await sut.deleteItem(item: value)
             Issue.record("It should throw ServiceError.missingParameters")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? BreezeDynamoDBManager.ServiceError)
+            #expect(dynamoDBError == .missingParameters)
         }
         try await removeTable(tableName: uuid)
     }
@@ -219,9 +226,10 @@ struct BreezeDynamoDBManagerTests {
         value.updatedAt = Date().iso8601
         do {
             try await sut.deleteItem(item: value)
-            Issue.record("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw DynamoDBErrorType.conditionalCheckFailedException")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? DynamoDBErrorType)
+            #expect(dynamoDBError == .conditionalCheckFailedException)
         }
         try await removeTable(tableName: uuid)
     }
@@ -235,9 +243,10 @@ struct BreezeDynamoDBManagerTests {
         value.createdAt = Date().iso8601
         do {
             try await sut.deleteItem(item: value)
-            Issue.record("It should throw ServiceError.missingParameters")
+            Issue.record("It should throw DynamoDBErrorType.conditionalCheckFailedException")
         } catch {
-            try #require(error != nil)
+            let dynamoDBError = try #require(error as? DynamoDBErrorType)
+            #expect(dynamoDBError == .conditionalCheckFailedException)
         }
         try await removeTable(tableName: uuid)
     }

@@ -19,6 +19,12 @@ import SotoDynamoDB
 actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
     let keyName: String
     
+    enum BreezeDynamoDBManagerError: Error {
+        case invalidRequest
+        case invalidItem
+    }
+        
+    
     private var response: (any BreezeCodable)?
     private var keyedResponse: (any BreezeCodable)?
     
@@ -33,7 +39,7 @@ actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
     
     func createItem<T: BreezeCodable>(item: T) async throws -> T {
         guard let response = self.response as? T else {
-            throw BreezeLambdaAPIError.invalidRequest
+            throw BreezeDynamoDBManagerError.invalidRequest
         }
         return response
     }
@@ -42,7 +48,7 @@ actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
         guard let response = self.keyedResponse as? T,
               response.key == key
         else {
-            throw BreezeLambdaAPIError.invalidRequest
+            throw BreezeDynamoDBManagerError.invalidRequest
         }
         return response
     }
@@ -51,7 +57,7 @@ actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
         guard let response = self.keyedResponse as? T,
               response.key == item.key
         else {
-            throw BreezeLambdaAPIError.invalidRequest
+            throw BreezeDynamoDBManagerError.invalidRequest
         }
         return response
     }
@@ -62,7 +68,7 @@ actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
               response.createdAt == item.createdAt,
               response.updatedAt == item.updatedAt
         else {
-            throw BreezeLambdaAPIError.invalidRequest
+            throw BreezeDynamoDBManagerError.invalidRequest
         }
         return
     }
@@ -71,7 +77,7 @@ actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
     var exclusiveKey: String?
     func listItems<T: BreezeCodable>(key: String?, limit: Int?) async throws -> ListResponse<T> {
         guard let response = self.response as? T else {
-            throw BreezeLambdaAPIError.invalidItem
+            throw BreezeDynamoDBManagerError.invalidItem
         }
         self.limit = limit
         self.exclusiveKey = key

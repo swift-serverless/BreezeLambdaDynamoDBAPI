@@ -222,10 +222,9 @@ struct BreezeLambdaHandlerTests {
             keyedResponse: keyedResponse,
             with: request
         )
-        let response: BreezeEmptyResponse = try apiResponse.decodeBody()
+        let _: BreezeEmptyResponse = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .ok)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
-        #expect(response != nil)
     }
     
     @Test
@@ -241,10 +240,9 @@ struct BreezeLambdaHandlerTests {
             keyedResponse: keyedResponse,
             with: request
         )
-        let response: BreezeEmptyResponse = try apiResponse.decodeBody()
+        let _: BreezeEmptyResponse = try apiResponse.decodeBody()
         #expect(apiResponse.statusCode == .notFound)
         #expect(apiResponse.headers == [ "Content-Type": "application/json" ])
-        #expect(response != nil)
     }
     
     @Test
