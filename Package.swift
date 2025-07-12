@@ -3,7 +3,7 @@
 import PackageDescription
 
 #if os(macOS)
-let platforms: [PackageDescription.SupportedPlatform]? = [.macOS(.v15), .iOS(.v13)]
+let platforms: [PackageDescription.SupportedPlatform]? = [.macOS(.v15)]
 #else
 let platforms: [PackageDescription.SupportedPlatform]? = nil
 #endif
@@ -21,8 +21,8 @@ let package = Package(
             targets: ["BreezeLambdaAPI"]
         ),
         .executable(
-            name: "BreezeDemoApplication",
-            targets: ["BreezeDemoApplication"]
+            name: "BreezeLambdaItemAPI",
+            targets: ["BreezeLambdaItemAPI"]
         )
     ],
     dependencies: [
@@ -35,7 +35,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "BreezeDemoApplication",
+            name: "BreezeLambdaItemAPI",
             dependencies: [
                 "BreezeLambdaAPI"
             ]
