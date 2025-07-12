@@ -13,7 +13,6 @@
 //    limitations under the License.
 
 import BreezeDynamoDBService
-@testable import BreezeLambdaAPI
 import SotoDynamoDB
 
 actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
