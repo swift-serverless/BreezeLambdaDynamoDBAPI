@@ -34,6 +34,21 @@ local_invoke_demo_app:
 test:
 	swift test --sanitize=thread --enable-code-coverage
 
+generate_docc:
+	mkdir -p docs && \
+ 	swift package --allow-writing-to-directory docs/BreezeLambdaAPI generate-documentation \
+		--target BreezeLambdaAPI \
+    	--disable-indexing \
+    	--transform-for-static-hosting \
+    	--hosting-base-path "https://swift-serverless.github.io/BreezeLambdaDynamoDBAPI/" \
+    	--output-path docs/BreezeLambdaAPI && \
+	swift package --allow-writing-to-directory docs/BreezeDynamoDBService generate-documentation \
+		--target BreezeDynamoDBService \
+    	--disable-indexing \
+    	--transform-for-static-hosting \
+    	--hosting-base-path "https://swift-serverless.github.io/BreezeLambdaDynamoDBAPI/" \
+    	--output-path docs/BreezeDynamoDBService
+
 coverage:
 	llvm-cov export $(TEST_PACKAGE) \
 		--instr-profile=$(SWIFT_BIN_PATH)/codecov/default.profdata \
