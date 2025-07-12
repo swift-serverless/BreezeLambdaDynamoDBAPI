@@ -17,6 +17,9 @@ import ServiceLifecycle
 import BreezeDynamoDBService
 import AWSLambdaRuntime
 
+/// BreezeLambdaAPI is a service that integrates with AWS Lambda to provide a Breeze API for DynamoDB operations.
+/// It supports operations such as create, read, update, delete, and list items in a DynamoDB table using a BreezeCodable.
+/// This Service is designed to work with ServiceLifecycle, allowing it to be run and stopped gracefully.
 public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     
     let logger = Logger(label: "service-group-breeze-lambda-api")
@@ -24,6 +27,15 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     private let serviceGroup: ServiceGroup
     private let apiConfig: any APIConfiguring
     
+    /// Initializes the BreezeLambdaAPI with the provided API configuration.
+    /// - Parameter apiConfig: An object conforming to `APIConfiguring` that provides the necessary configuration for the Breeze API.
+    /// - Throws: An error if the configuration is invalid or if the service fails to initialize.
+    ///
+    /// This initializer sets up the Breeze Lambda API service with the specified configuration, including the DynamoDB service and the operation to be performed.
+    ///
+    /// - Note:
+    ///   - The `apiConfig` parameter must conform to the `APIConfiguring` protocol, which provides the necessary configuration details for the Breeze API.
+    ///   - The default implementation uses `BreezeAPIConfiguration`, but you can provide your own implementation if needed.
     public init(apiConfig: APIConfiguring = BreezeAPIConfiguration()) async throws {
         do {
             self.apiConfig = apiConfig
@@ -33,6 +45,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
                 timeout: .seconds(60),
                 logger: logger
             )
+            let operation = try apiConfig.operation()
             let dynamoDBService = await BreezeDynamoDBService(
                 config: config,
                 httpConfig: httpConfig,
@@ -40,7 +53,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
             )
             let breezeLambdaService = BreezeLambdaService<T>(
                 dynamoDBService: dynamoDBService,
-                operation: try apiConfig.operation(),
+                operation: operation,
                 logger: logger
             )
             self.serviceGroup = ServiceGroup(
@@ -54,6 +67,11 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
         }
     }
     
+    /// Runs the BreezeLambdaAPI service.
+    /// This method starts the internal ServiceGroup and begins processing requests.
+    /// - Throws: An error if the service fails to start or if an issue occurs during execution.
+    ///
+    /// The internal ServiceGroup will handle the lifecycle of the BreezeLambdaAPI, including starting and stopping the service gracefully.
     public func run() async throws {
         logger.info("Starting BreezeLambdaAPI...")
         try await serviceGroup.run()

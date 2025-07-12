@@ -15,4 +15,5 @@
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 
+/// A simple struct representing an empty response for Breeze Lambda API.
 struct BreezeEmptyResponse: Codable {}

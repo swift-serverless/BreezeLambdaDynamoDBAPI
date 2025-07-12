@@ -19,15 +19,15 @@ import class Foundation.JSONEncoder
 extension APIGatewayV2Response {
     private static let encoder = JSONEncoder()
     
-    /// defaultHeaders
     /// Override the headers in APIGatewayV2Response
     static let defaultHeaders = [ "Content-Type": "application/json" ]
 
+    /// A  model representing the body of an error response
     struct BodyError: Codable {
         let error: String
     }
     
-    /// init
+    /// Initializer for APIGatewayV2Response with a BodyError
     /// - Parameters:
     ///   - error: Error
     ///   - statusCode: HTTP Status Code
@@ -36,7 +36,7 @@ extension APIGatewayV2Response {
         self.init(with: bodyError, statusCode: statusCode)
     }
     
-    /// init
+    /// Initializer for APIGatewayV2Response with an Encodable object
     /// - Parameters:
     ///   - object: Encodable Object
     ///   - statusCode: HTTP Status Code

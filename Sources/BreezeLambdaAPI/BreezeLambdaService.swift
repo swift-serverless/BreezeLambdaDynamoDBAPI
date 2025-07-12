@@ -25,25 +25,42 @@ import FoundationEssentials
 import Foundation
 #endif
 
+/// BreezeLambdaService is an actor that provides a service for handling AWS Lambda events using BreezeCodable models.
+/// It conforms to the `Service` protocol and implements the `handler` method to process incoming events.
+/// It manages the lifecycle of a BreezeLambdaHandler, which is responsible for handling the actual business logic.
+/// It also provides a method to run the service and handle graceful shutdowns.
+/// it operates on a BreezeCodable model type `T` that conforms to the BreezeCodable protocol.
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
+    /// DynamoDBService is an instance of BreezeDynamoDBServing that provides access to the DynamoDB database manager.
     let dynamoDBService: BreezeDynamoDBServing
+    /// Operation is an instance of BreezeOperation that defines the operation to be performed by the BreezeLambdaHandler.
     let operation: BreezeOperation
+    /// Logger is an instance of Logger for logging messages during the service's operation.
     let logger: Logger
     
+    /// Initializes a new instance of `BreezeLambdaService`.
+    /// - Parameters:
+    ///   - dynamoDBService: An instance of `BreezeDynamoDBServing` that provides access to the DynamoDB database manager.
+    ///   - operation: The `BreezeOperation` that defines the operation to be performed by the BreezeLambdaHandler.
+    ///   - logger: A `Logger` instance for logging messages during the service's operation.
     init(dynamoDBService: BreezeDynamoDBServing, operation: BreezeOperation, logger: Logger) {
         self.dynamoDBService = dynamoDBService
         self.operation = operation
         self.logger = logger
     }
     
+    /// BreezeLambdaHandler is an optional instance of BreezeLambdaHandler that will handle the actual business logic.
     var breezeApi: BreezeLambdaHandler<T>?
     
+    /// Handler method that processes incoming AWS Lambda events.
     func handler(event: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
         guard let breezeApi else { throw BreezeLambdaAPIError.invalidHandler }
         return try await breezeApi.handle(event, context: context)
     }
     
+    /// Runs the BreezeLambdaService, initializing the BreezeLambdaHandler and starting the Lambda runtime.
+    /// - Throws: An error if the service fails to initialize or run.
     func run() async throws {
         let dbManager = await dynamoDBService.dbManager()
         let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: self.operation)
@@ -64,6 +81,8 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
         }
     }
     
+    /// Runs a task with cancellation on graceful shutdown.
+    /// - Note: It's required to allow a full process shutdown without leaving tasks hanging.
     private func runTaskWithCancellationOnGracefulShutdown(
         operation: @escaping @Sendable () async throws -> Void,
         onGracefulShutdown: () async throws -> Void

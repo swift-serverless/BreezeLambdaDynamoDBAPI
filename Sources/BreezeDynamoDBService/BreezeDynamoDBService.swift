@@ -17,6 +17,9 @@ import AsyncHTTPClient
 import ServiceLifecycle
 import Logging
 
+/// BreezeDynamoDBServing
+/// A protocol that defines the interface for a Breeze DynamoDB service.
+/// It provides methods to access the database manager and to gracefully shutdown the service.
 public protocol BreezeDynamoDBServing: Actor {
     func dbManager() async -> BreezeDynamoDBManaging
     func gracefulShutdown() throws
@@ -26,9 +29,17 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     
     private let dbManager: BreezeDynamoDBManaging
     private let logger: Logger
-    private var awsClient: AWSClient
+    private let awsClient: AWSClient
     private let httpClient: HTTPClient
+    private var isShutdown = false
     
+    /// Initializes the BreezeDynamoDBService with the provided configuration.
+    /// - Parameters:
+    ///   - config: The configuration for the DynamoDB service.
+    ///   - httpConfig: The configuration for the HTTP client.
+    ///   - logger: The logger to use for logging messages.
+    ///   - DBManagingType: The type of the BreezeDynamoDBManaging to use. Defaults to BreezeDynamoDBManager.
+    ///   This initializer sets up the AWS client, HTTP client, and the database manager.
     public init(
         config: BreezeDynamoDBConfig,
         httpConfig: BreezeHTTPClientConfig,
@@ -64,18 +75,27 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
         logger.info("DBManager is ready.")
     }
     
+    /// Returns the BreezeDynamoDBManaging instance.
     public func dbManager() async -> BreezeDynamoDBManaging {
         logger.info("Starting DynamoDBService...")
         return self.dbManager
     }
     
+    /// Gracefully shutdown the service and its components.
+    /// - Throws: An error if the shutdown process fails.
+    /// This method ensures that the AWS client and HTTP client are properly shutdown before marking the service as shutdown.
+    /// It also logs the shutdown process.
+    /// This method is idempotent;
+    /// - Important: This method must be called at leat once to ensure that resources are released properly. If the method is not called, it will lead to a crash.
     public func gracefulShutdown() throws {
+        guard !isShutdown else { return }
         logger.info("Stopping DynamoDBService...")
         try awsClient.syncShutdown()
         logger.info("DynamoDBService is stopped.")
         logger.info("Stopping HTTPClient...")
         try httpClient.syncShutdown()
         logger.info("HTTPClient is stopped.")
+        isShutdown = true
     }
 }
 

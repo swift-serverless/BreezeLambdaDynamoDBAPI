@@ -12,6 +12,8 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+/// BreezeOperation is an enumeration that defines the operations supported by Breeze Lambda API.
+///  It includes operations such as create, read, update, delete, and list.
 public enum BreezeOperation: String, Sendable {
     case create
     case read
@@ -19,6 +21,11 @@ public enum BreezeOperation: String, Sendable {
     case delete
     case list
 
+    /// Initializes a BreezeOperation from a handler string.
+    ///
+    /// - Parameter handler: A string representing the handler, typically in the format "module.operation".
+    /// - Returns: An optional BreezeOperation if the handler string can be parsed successfully.
+    /// - Note: This initializer extracts the operation from the handler string by splitting it at the last dot (.) and matching it to a BreezeOperation case.
     init?(handler: String) {
         guard let value = handler.split(separator: ".").last,
               let operation = BreezeOperation(rawValue: String(value))

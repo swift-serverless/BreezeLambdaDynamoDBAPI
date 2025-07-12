@@ -15,16 +15,26 @@
 import Logging
 import NIOCore
 
+/// BreezeClientServiceError defines the errors that can occur in the Breeze Client Service.
 public enum BreezeClientServiceError: Error {
     case invalidHttpClient
 }
 
+/// BreezeHTTPClientConfig is a configuration structure for the Breeze HTTP client.
 public struct BreezeHTTPClientConfig: Sendable {
+    
+    /// Initializes a new instance of BreezeHTTPClientConfig.
+    /// - Parameters:
+    ///   - timeout: The timeout duration for HTTP requests.
+    ///   - logger: The logger to use for logging messages.
     public init(timeout: TimeAmount, logger: Logger) {
         self.timeout = timeout
         self.logger = logger
     }
     
+    /// The timeout duration for HTTP requests.
     public let timeout: TimeAmount
+    
+    /// The logger to use for logging messages.
     public let logger: Logger
 }

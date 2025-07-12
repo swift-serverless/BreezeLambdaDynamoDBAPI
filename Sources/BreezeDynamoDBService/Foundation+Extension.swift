@@ -16,6 +16,8 @@ import class Foundation.DateFormatter
 import struct Foundation.Date
 import struct Foundation.TimeZone
 
+/// This file contains extensions for DateFormatter, Date, and String to handle ISO 8601 date formatting and parsing.
+/// These extensions provide a convenient way to convert between `Date` objects and their ISO 8601 string representations.
 extension DateFormatter {
     static var iso8061: DateFormatter {
         let formatter = DateFormatter()
@@ -26,6 +28,7 @@ extension DateFormatter {
 }
 
 extension Date {
+    /// Returns a string representation of the date in ISO 8601 format.
     var iso8601: String {
         let formatter = DateFormatter.iso8061
         return formatter.string(from: self)
@@ -33,6 +36,7 @@ extension Date {
 }
 
 extension String {
+    /// Attempts to parse the string as an ISO 8601 date.
     var iso8601: Date? {
         let formatter = DateFormatter.iso8061
         return formatter.date(from: self)

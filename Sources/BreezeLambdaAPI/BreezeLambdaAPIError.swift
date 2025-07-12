@@ -18,15 +18,23 @@ import FoundationEssentials
 import Foundation
 #endif
 
+/// BreezeLambdaAPIError is an enumeration that defines various errors that can occur in the Breeze Lambda API.
 enum BreezeLambdaAPIError: Error {
+    /// Indicates that an item is invalid.
     case invalidItem
+    /// Indicates that the DynamoDB table name is not found in the environment.
     case tableNameNotFound
+    /// Indicates that the key name for the DynamoDB table is not found in the environment.
     case keyNameNotFound
+    /// Indicates that the request made to the API is invalid.
     case invalidRequest
+    /// Indicates that the _HANDLER environment variable is invalid or missing.
     case invalidHandler
+    /// Indicates that the service is invalid, possibly due to misconfiguration or an unsupported operation.
     case invalidService
 }
 
+/// Extension for BreezeLambdaAPIError to provide localized error descriptions.
 extension BreezeLambdaAPIError: LocalizedError {
     var errorDescription: String? {
         switch self {

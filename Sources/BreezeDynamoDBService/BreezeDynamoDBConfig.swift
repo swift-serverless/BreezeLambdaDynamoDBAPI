@@ -14,7 +14,16 @@
 
 import SotoCore
 
+/// BreezeDynamoDBConfig is a configuration structure for Breeze DynamoDB service.
+/// It contains the necessary parameters to connect to a DynamoDB instance, including the region, table name, key name, and an optional endpoint.
 public struct BreezeDynamoDBConfig: Sendable {
+    
+    /// Initializes a new instance of BreezeDynamoDBConfig.
+    /// - Parameters:
+    ///   - region: The AWS region where the DynamoDB table is located.
+    ///   - tableName: The name of the DynamoDB table.
+    ///   - keyName: The name of the primary key in the DynamoDB table.
+    ///   - endpoint: An optional endpoint URL for the DynamoDB service. If not provided, the default AWS endpoint will be used.
     public init(
         region: Region,
         tableName: String,
@@ -27,8 +36,15 @@ public struct BreezeDynamoDBConfig: Sendable {
         self.endpoint = endpoint
     }
     
+    /// The AWS region where the DynamoDB table is located.
     public let region: Region
+    
+    /// The name of the DynamoDB table.
     public let tableName: String
+    
+    /// The name of the primary key in the DynamoDB table.
     public let keyName: String
+    
+    /// An optional endpoint URL for the DynamoDB service.
     public let endpoint: String?
 }
