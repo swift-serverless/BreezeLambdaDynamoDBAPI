@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -19,15 +19,15 @@ import class Foundation.JSONEncoder
 extension APIGatewayV2Response {
     private static let encoder = JSONEncoder()
     
-    /// defaultHeaders
     /// Override the headers in APIGatewayV2Response
-    static var defaultHeaders = [ "Content-Type": "application/json" ]
+    static let defaultHeaders = [ "Content-Type": "application/json" ]
 
+    /// A  model representing the body of an error response
     struct BodyError: Codable {
         let error: String
     }
     
-    /// init
+    /// Initializer for APIGatewayV2Response with a BodyError
     /// - Parameters:
     ///   - error: Error
     ///   - statusCode: HTTP Status Code
@@ -36,7 +36,7 @@ extension APIGatewayV2Response {
         self.init(with: bodyError, statusCode: statusCode)
     }
     
-    /// init
+    /// Initializer for APIGatewayV2Response with an Encodable object
     /// - Parameters:
     ///   - object: Encodable Object
     ///   - statusCode: HTTP Status Code

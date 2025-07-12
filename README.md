@@ -69,7 +69,16 @@ extension Item: BreezeCodable { }
 Add the implementation of the Lambda to the file `swift.main`
 
 ```swift
-BreezeLambdaAPI<Item>.main()
+@main
+struct BreezeLambdaItemAPI {
+    static func main() async throws {
+      do {
+            try await BreezeLambdaAPI<Item>().run()
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+}
 ```
 
 ## Documentation

@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -13,20 +13,21 @@
 //    limitations under the License.
 
 import SotoDynamoDB
+import AWSLambdaRuntime
 import Logging
 
 enum LocalStackDynamoDB {
     
-    static var endpoint: String = {
-        if let localstack = getEnvironmentVar(name: "LOCALSTACK_ENDPOINT"),
+    static let endpoint: String = {
+        if let localstack = Lambda.env("LOCALSTACK_ENDPOINT"),
            !localstack.isEmpty {
             return localstack
         }
         return "http://localhost:4566"
     }()
 
-    public static var logger: Logger = {
-        if let loggingLevel = getEnvironmentVar(name: "AWS_LOG_LEVEL") {
+    public static let logger: Logger = {
+        if let loggingLevel = Lambda.env("AWS_LOG_LEVEL") {
             if let logLevel = Logger.Level(rawValue: loggingLevel.lowercased()) {
                 var logger = Logger(label: "breeze")
                 logger.logLevel = logLevel
@@ -36,13 +37,12 @@ enum LocalStackDynamoDB {
         return AWSClient.loggingDisabled
     }()
     
-    static var client = AWSClient(
+    static let client = AWSClient(
         credentialProvider: .static(accessKeyId: "breeze", secretAccessKey: "magic"),
-        middlewares: [AWSLoggingMiddleware()],
-        httpClientProvider: .createNew
+        middleware: AWSLoggingMiddleware()
     )
 
-    static var dynamoDB = DynamoDB(
+    static let dynamoDB = DynamoDB(
         client: client,
         region: .useast1,
         endpoint: endpoint
@@ -67,4 +67,3 @@ enum LocalStackDynamoDB {
         _ = try await Self.dynamoDB.deleteTable(input, logger: Self.logger)
     }
 }
-

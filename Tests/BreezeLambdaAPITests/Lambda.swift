@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -13,43 +13,67 @@
 //    limitations under the License.
 
 import AWSLambdaEvents
-import AWSLambdaRuntime
-@testable import AWSLambdaRuntimeCore
-import AWSLambdaTesting
+@testable import AWSLambdaRuntime
+import BreezeDynamoDBService
+@testable import BreezeLambdaAPI
 import Logging
 import NIO
+import ServiceLifecycle
+import ServiceLifecycleTestKit
+import Logging
+import Testing
+import SotoDynamoDB
+import AsyncHTTPClient
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
-extension Lambda {
-    public static func test<Handler: LambdaHandler>(
-        _ handlerType: Handler.Type,
-        with event: Handler.Event,
-        using config: TestConfig = .init()
-    ) async throws -> Handler.Output {
-        let logger = Logger(label: "test")
-        let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        defer {
-            try! eventLoopGroup.syncShutdownGracefully()
+extension AWSLambdaRuntime.Lambda {
+    
+    static func test<T: BreezeCodable>(
+        _ handlerType: BreezeLambdaHandler<T>.Type,
+        config: BreezeDynamoDBConfig,
+        operation: BreezeOperation,
+        response: (any BreezeCodable)?,
+        keyedResponse: (any BreezeCodable)?,
+        with event: BreezeLambdaHandler.Event) async throws -> BreezeLambdaHandler<T>.Output {
+            
+        let logger = Logger(label: "evaluateHandler")
+        let decoder = JSONDecoder()
+        let encoder = JSONEncoder()
+        
+        let awsClient = AWSClient()
+        let db = SotoDynamoDB.DynamoDB(client: awsClient)
+        let dbManager = BreezeDynamoDBManagerMock(db: db, tableName: config.tableName, keyName: config.keyName)
+        let sut = handlerType.init(dbManager: dbManager, operation: operation)
+
+        let closureHandler = ClosureHandler { event, context in
+            //Inject Mock Response
+            await dbManager.setupMockResponse(response: response, keyedResponse: keyedResponse)
+            // Execute Handler
+            return try await sut.handle(event, context: context)
         }
-        let eventLoop = eventLoopGroup.next()
-
-        let initContext = LambdaInitializationContext.__forTestsOnly(
-            logger: logger,
-            eventLoop: eventLoop
+        
+        var handler = LambdaCodableAdapter(
+            encoder: encoder,
+            decoder: decoder,
+            handler: LambdaHandlerAdapter(handler: closureHandler)
         )
-
+        let data = try encoder.encode(event)
+        let event = ByteBuffer(data: data)
+        let writer = MockLambdaResponseStreamWriter()
         let context = LambdaContext.__forTestsOnly(
-            requestID: config.requestID,
-            traceID: config.traceID,
-            invokedFunctionARN: config.invokedFunctionARN,
-            timeout: config.timeout,
-            logger: logger,
-            eventLoop: eventLoop
+            requestID: UUID().uuidString,
+            traceID: UUID().uuidString,
+            invokedFunctionARN: "arn:",
+            timeout: .milliseconds(6000),
+            logger: logger
         )
-        let handler = try await Handler(context: initContext)
-        defer {
-            let eventLoop = initContext.eventLoop.next()
-            try? initContext.terminator.terminate(eventLoop: eventLoop).wait()
-        }
-        return try await handler.handle(event, context: context)
+        try await handler.handle(event, responseWriter: writer, context: context)
+        let result = await writer.output ?? ByteBuffer()
+        try await awsClient.shutdown()
+        return try decoder.decode(BreezeLambdaHandler<T>.Output.self, from: result)
     }
 }

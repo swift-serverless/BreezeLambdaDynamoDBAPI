@@ -1,4 +1,4 @@
-//    Copyright 2023 (c) Andrea Scuderi - https://github.com/swift-serverless
+//    Copyright 2024 (c) Andrea Scuderi - https://github.com/swift-serverless
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -12,112 +12,90 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-import struct Foundation.Date
-import NIO
 import SotoDynamoDB
+import AsyncHTTPClient
+import ServiceLifecycle
+import Logging
 
-public class BreezeDynamoDBService: BreezeDynamoDBServing {
-    enum ServiceError: Error {
-        case notFound
-        case missingParameters
-    }
-
-    let db: DynamoDB
-    public let keyName: String
-    let tableName: String
-
-    public required init(db: DynamoDB, tableName: String, keyName: String) {
-        self.db = db
-        self.tableName = tableName
-        self.keyName = keyName
-    }
+/// BreezeDynamoDBServing
+/// A protocol that defines the interface for a Breeze DynamoDB service.
+/// It provides methods to access the database manager and to gracefully shutdown the service.
+public protocol BreezeDynamoDBServing: Actor {
+    func dbManager() async -> BreezeDynamoDBManaging
+    func gracefulShutdown() throws
 }
 
-public extension BreezeDynamoDBService {
-    func createItem<T: BreezeCodable>(item: T) async throws -> T {
-        var item = item
-        let date = Date()
-        item.createdAt = date.iso8601
-        item.updatedAt = date.iso8601
-        let input = DynamoDB.PutItemCodableInput(
-            conditionExpression: "attribute_not_exists(#keyName)",
-            expressionAttributeNames: ["#keyName": keyName],
-            item: item,
-            tableName: tableName
+public actor BreezeDynamoDBService: BreezeDynamoDBServing {
+    
+    private let dbManager: BreezeDynamoDBManaging
+    private let logger: Logger
+    private let awsClient: AWSClient
+    private let httpClient: HTTPClient
+    private var isShutdown = false
+    
+    /// Initializes the BreezeDynamoDBService with the provided configuration.
+    /// - Parameters:
+    ///   - config: The configuration for the DynamoDB service.
+    ///   - httpConfig: The configuration for the HTTP client.
+    ///   - logger: The logger to use for logging messages.
+    ///   - DBManagingType: The type of the BreezeDynamoDBManaging to use. Defaults to BreezeDynamoDBManager.
+    ///   This initializer sets up the AWS client, HTTP client, and the database manager.
+    public init(
+        config: BreezeDynamoDBConfig,
+        httpConfig: BreezeHTTPClientConfig,
+        logger: Logger,
+        DBManagingType: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
+    ) async {
+        logger.info("Init DynamoDBService with config...")
+        logger.info("region: \(config.region)")
+        logger.info("tableName: \(config.tableName)")
+        logger.info("keyName: \(config.keyName)")
+        self.logger = logger
+        
+        let timeout = HTTPClient.Configuration.Timeout(
+            connect: httpConfig.timeout,
+            read: httpConfig.timeout
         )
-        let _ = try await db.putItem(input)
-        return try await readItem(key: item.key)
-    }
-
-    func readItem<T: BreezeCodable>(key: String) async throws -> T {
-        let input = DynamoDB.GetItemInput(
-            key: [keyName: DynamoDB.AttributeValue.s(key)],
-            tableName: tableName
+        let configuration = HTTPClient.Configuration(timeout: timeout)
+        self.httpClient = HTTPClient(
+            eventLoopGroupProvider: .singleton,
+            configuration: configuration
         )
-        let data = try await db.getItem(input, type: T.self)
-        guard let item = data.item else {
-            throw ServiceError.notFound
-        }
-        return item
-    }
-
-    private struct AdditionalAttributes: Encodable {
-        let oldUpdatedAt: String
+        self.awsClient = AWSClient(httpClient: httpClient)
+        let db = SotoDynamoDB.DynamoDB(
+            client: awsClient,
+            region: config.region,
+            endpoint: config.endpoint
+        )
+        self.dbManager = DBManagingType.init(
+            db: db,
+            tableName: config.tableName,
+            keyName: config.keyName
+        )
+        logger.info("DBManager is ready.")
     }
     
-    func updateItem<T: BreezeCodable>(item: T) async throws -> T {
-        var item = item
-        let oldUpdatedAt = item.updatedAt ?? ""
-        let date = Date()
-        item.updatedAt = date.iso8601
-        let attributes = AdditionalAttributes(oldUpdatedAt: oldUpdatedAt)
-        let input = try DynamoDB.UpdateItemCodableInput(
-            additionalAttributes: attributes,
-            conditionExpression: "attribute_exists(#\(keyName)) AND #updatedAt = :oldUpdatedAt AND #createdAt = :createdAt",
-            key: [keyName],
-            tableName: tableName,
-            updateItem: item
-        )
-        let _ = try await db.updateItem(input)
-        return try await readItem(key: item.key)
+    /// Returns the BreezeDynamoDBManaging instance.
+    public func dbManager() async -> BreezeDynamoDBManaging {
+        logger.info("Starting DynamoDBService...")
+        return self.dbManager
     }
-
-    func deleteItem<T: BreezeCodable>(item: T) async throws {
-        guard let updatedAt = item.updatedAt,
-              let createdAt = item.createdAt else {
-            throw ServiceError.missingParameters
-        }
-        
-        let input = DynamoDB.DeleteItemInput(
-            conditionExpression: "#updatedAt = :updatedAt AND #createdAt = :createdAt",
-            expressionAttributeNames: ["#updatedAt": "updatedAt",
-                                       "#createdAt" : "createdAt"],
-            expressionAttributeValues: [":updatedAt": .s(updatedAt),
-                                        ":createdAt" : .s(createdAt)],
-            key: [keyName: DynamoDB.AttributeValue.s(item.key)],
-            tableName: tableName
-        )
-        let _ = try await db.deleteItem(input)
-        return
-    }
-
-    func listItems<T: BreezeCodable>(key: String?, limit: Int?) async throws -> ListResponse<T> {
-        var exclusiveStartKey: [String: DynamoDB.AttributeValue]?
-        if let key {
-            exclusiveStartKey = [keyName: DynamoDB.AttributeValue.s(key)]
-        }
-        let input = DynamoDB.ScanInput(
-            exclusiveStartKey: exclusiveStartKey,
-            limit: limit,
-            tableName: tableName
-        )
-        let data = try await db.scan(input, type: T.self)
-        if let lastEvaluatedKeyShape = data.lastEvaluatedKey?[keyName],
-           case .s(let lastEvaluatedKey) = lastEvaluatedKeyShape
-        {
-            return ListResponse(items: data.items ?? [], lastEvaluatedKey: lastEvaluatedKey)
-        } else {
-            return ListResponse(items: data.items ?? [], lastEvaluatedKey: nil)
-        }
+    
+    /// Gracefully shutdown the service and its components.
+    /// - Throws: An error if the shutdown process fails.
+    /// This method ensures that the AWS client and HTTP client are properly shutdown before marking the service as shutdown.
+    /// It also logs the shutdown process.
+    /// This method is idempotent;
+    /// - Important: This method must be called at leat once to ensure that resources are released properly. If the method is not called, it will lead to a crash.
+    public func gracefulShutdown() throws {
+        guard !isShutdown else { return }
+        logger.info("Stopping DynamoDBService...")
+        try awsClient.syncShutdown()
+        logger.info("DynamoDBService is stopped.")
+        logger.info("Stopping HTTPClient...")
+        try httpClient.syncShutdown()
+        logger.info("HTTPClient is stopped.")
+        isShutdown = true
     }
 }
+
