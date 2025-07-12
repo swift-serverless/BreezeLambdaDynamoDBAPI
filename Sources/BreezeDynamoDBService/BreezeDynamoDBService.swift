@@ -89,13 +89,19 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     /// - Important: This method must be called at leat once to ensure that resources are released properly. If the method is not called, it will lead to a crash.
     public func gracefulShutdown() throws {
         guard !isShutdown else { return }
+        isShutdown = true
         logger.info("Stopping DynamoDBService...")
         try awsClient.syncShutdown()
         logger.info("DynamoDBService is stopped.")
         logger.info("Stopping HTTPClient...")
         try httpClient.syncShutdown()
         logger.info("HTTPClient is stopped.")
-        isShutdown = true
+    }
+    
+    deinit {
+        guard !isShutdown else { return }
+        try? awsClient.syncShutdown()
+        try? httpClient.syncShutdown()
     }
 }
 
