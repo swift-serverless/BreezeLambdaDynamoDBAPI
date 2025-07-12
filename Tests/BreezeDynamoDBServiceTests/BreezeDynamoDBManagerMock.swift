@@ -22,7 +22,6 @@ actor BreezeDynamoDBManagerMock: BreezeDynamoDBManaging {
         case invalidRequest
         case invalidItem
     }
-        
     
     private var response: (any BreezeCodable)?
     private var keyedResponse: (any BreezeCodable)?
