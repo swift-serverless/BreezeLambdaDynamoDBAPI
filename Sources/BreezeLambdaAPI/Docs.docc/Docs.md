@@ -1,7 +1,8 @@
 # BreezeLambdaAPI
 
-@Metadata {
+@Metadata { 
    @PageImage(purpose: icon, source: "Icon")
+   @PageImage(purpose: card, source: "Icon")
 }
 
 ## Essentials
@@ -63,7 +64,7 @@ struct Item: Codable {
 extension Item: BreezeCodable { }
 ```
 
-Add the implementation of the Lambda to the file `swift.main`
+Add the implementation of the Lambda to the file `BreezeLambdaItemAPI.swift`
 
 ```swift
 @main
