@@ -17,7 +17,7 @@ public protocol APIConfiguring {
 }
 
 /// BreezeAPIConfiguration is a struct that conforms to APIConfiguring.
-/// It provides the necessary configuration for the Breeze Lambda API, including the DynamoDB table name, key name, and AWS region.
+/// Unsing the environment, It provides the necessary configuration for the Breeze Lambda API, including the DynamoDB table name, key name, and AWS region.
 /// It also defines the operation handler for Breeze operations.
 public struct BreezeAPIConfiguration: APIConfiguring {
     
@@ -45,10 +45,15 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     
     /// Returns the configuration for the Breeze DynamoDB service.
     /// - Throws:
-    ///    - `BreezeLambdaAPIError.tableNameNotFound` if the DynamoDB table name is not found in the environment variables.
-    ///    - `BreezeLambdaAPIError.keyNameNotFound` if the DynamoDB key name is not found in the environment variables.
-    ///
-    /// This method retrieves the AWS region, DynamoDB table name, key name, and optional endpoint from the environment variables.
+    ///   - `BreezeLambdaAPIError.tableNameNotFound` if the DynamoDB table name is not found in the environment variables.
+    ///   - `BreezeLambdaAPIError.keyNameNotFound` if the DynamoDB key name is not found in the environment variables.
+    /// - Returns: A `BreezeDynamoDBConfig` instance containing the configuration for the Breeze DynamoDB service.
+    /// This method is used to retrieve the necessary configuration for the Breeze Lambda API to interact with DynamoDB.
+    /// It includes the AWS region, DynamoDB table name, key name, and an optional endpoint for LocalStack.
+    /// - Important: The configuration is essential for the Breeze Lambda API to function correctly with DynamoDB. This method retrieves the configuration from environment variables:
+    ///   - `AWS_REGION`: The AWS region where the DynamoDB table is located.
+    ///   - `DYNAMO_DB_TABLE_NAME`: The name of the DynamoDB table.
+    ///   - `DYNAMO_DB_KEY`: The name of the primary key in the DynamoDB table.
     public func getConfig() throws -> BreezeDynamoDBConfig {
         BreezeDynamoDBConfig(
             region: currentRegion(),

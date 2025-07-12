@@ -25,6 +25,8 @@ public protocol BreezeDynamoDBServing: Actor {
     func gracefulShutdown() throws
 }
 
+/// BreezeDynamoDBService is an actor that conforms to the BreezeDynamoDBServing protocol.
+/// It provides methods to access the DynamoDB database manager and to gracefully shutdown the service.
 public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     
     private let dbManager: BreezeDynamoDBManaging
