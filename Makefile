@@ -40,13 +40,13 @@ generate_docc:
 		--target BreezeLambdaAPI \
     	--disable-indexing \
     	--transform-for-static-hosting \
-    	--hosting-base-path "https://swift-serverless.github.io/BreezeLambdaDynamoDBAPI/" \
+    	--hosting-base-path "https://swift-serverless.github.io/BreezeLambdaDynamoDBAPI/BreezeLambdaAPI/" \
     	--output-path docs/BreezeLambdaAPI && \
 	swift package --allow-writing-to-directory docs/BreezeDynamoDBService generate-documentation \
 		--target BreezeDynamoDBService \
     	--disable-indexing \
     	--transform-for-static-hosting \
-    	--hosting-base-path "https://swift-serverless.github.io/BreezeLambdaDynamoDBAPI/" \
+    	--hosting-base-path "https://swift-serverless.github.io/BreezeLambdaDynamoDBAPI/BreezeDynamoDBService/" \
     	--output-path docs/BreezeDynamoDBService
 
 coverage:
