@@ -18,12 +18,13 @@ import FoundationEssentials
 import Foundation
 #endif
 
-/// CodableSendable is a protocol that combines Sendable and Codable.
+/// Protocol that combines Sendable and Codable.
 public protocol CodableSendable: Sendable, Codable { }
 
-/// BreezeCodable is a protocol that extends CodableSendable to include properties
+/// Protocol that extends CodableSendable to include properties
 /// for a key, creation date, and update date.
-/// It is designed to be used with Breeze services that require these common fields
+///
+/// BreezeCodable is designed to be used with Breeze services that require these common fields
 /// for items stored in a database, such as DynamoDB.
 /// - Parameters:
 ///   - key: A unique identifier for the item.

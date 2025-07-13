@@ -14,7 +14,7 @@
 
 import SotoDynamoDB
 
-/// BreezeDynamoDBManaging is a protocol that defines the methods for managing DynamoDB items.
+/// Defines the methods for managing DynamoDB items.
 public protocol BreezeDynamoDBManaging: Sendable {
     /// The keyName is the name of the primary key in the DynamoDB table.
     var keyName: String { get }
@@ -53,7 +53,6 @@ public protocol BreezeDynamoDBManaging: Sendable {
     /// Deletes an item from the DynamoDB table.
     /// - Parameter item: The item to delete, conforming to BreezeCodable.
     /// - Throws: An error if the item could not be deleted.
-    /// - Returns: Void if the item was successfully deleted.
     /// - Note:
     ///   - The item must conform to BreezeCodable.
     ///   - The item must have the same primary key as an existing item in the table.

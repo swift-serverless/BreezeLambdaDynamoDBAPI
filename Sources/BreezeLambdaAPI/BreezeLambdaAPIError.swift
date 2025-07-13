@@ -18,7 +18,7 @@ import FoundationEssentials
 import Foundation
 #endif
 
-/// BreezeLambdaAPIError is an enumeration that defines various errors that can occur in the Breeze Lambda API.
+/// Enumeration that defines various errors that can occur in the Breeze Lambda API.
 enum BreezeLambdaAPIError: Error {
     /// Indicates that an item is invalid.
     case invalidItem

@@ -9,30 +9,38 @@ import SotoDynamoDB
 import BreezeDynamoDBService
 import AWSLambdaRuntime
 
-/// APIConfiguring is a protocol that defines the configuration for the Breeze Lambda API.
+/// Defines the configuration for the Breeze Lambda API.
 public protocol APIConfiguring {
     var dbTimeout: Int64 { get }
     func operation() throws -> BreezeOperation
     func getConfig() throws -> BreezeDynamoDBConfig
 }
 
-/// BreezeAPIConfiguration is a struct that conforms to APIConfiguring.
-/// It provides the necessary configuration for the Breeze Lambda API, including the DynamoDB table name, key name, and AWS region.
-/// It also defines the operation handler for Breeze operations.
+/// A struct that conforms to APIConfiguring protocol, providing essential configuration for Lambda functions that interact with DynamoDB.
+///
+/// It fetches the necessary configuration from environment variables, such as the Handler, AWS region, DynamoDB table name, and key name.
+///
+/// To configure the Lambda function, you need to set up the following environment variables:
+/// - `_HANDLER`: The handler for the Lambda function, in the format `module.operation`.
+/// - `AWS_REGION`: The AWS region where the DynamoDB table is located.
+/// - `DYNAMO_DB_TABLE_NAME`: The name of the DynamoDB table.
+/// - `DYNAMO_DB_KEY`: The name of the primary key in the DynamoDB table.
 public struct BreezeAPIConfiguration: APIConfiguring {
     
     public init() {}
     
-    /// The timeout for database operations in seconds.
+    /// Timeout for database operations in seconds.
     public let dbTimeout: Int64 = 30
     
     /// The operation handler for Breeze operations.
+    ///
+    /// Resturns the operation that will be executed by the Breeze Lambda API.
     /// This method retrieves the handler from the environment variable `_HANDLER`.
     /// - Throws: `BreezeLambdaAPIError.invalidHandler` if the handler is not found or cannot be parsed.
     /// - Returns: A `BreezeOperation` instance initialized with the handler.
     ///
-    /// This method is used to determine the operation that will be executed by the Breeze Lambda API.
-    /// It expects the `_HANDLER` environment variable to be set, which should contain the handler in the format `module.function`.
+    /// - Note: It expects the `_HANDLER` environment variable to be set in the format `module.operation`.
+    ///
     ///  See BreezeOperation for more details.
     public func operation() throws -> BreezeOperation {
         guard let handler = Lambda.env("_HANDLER"),
@@ -43,12 +51,18 @@ public struct BreezeAPIConfiguration: APIConfiguring {
         return operation
     }
     
-    /// Returns the configuration for the Breeze DynamoDB service.
-    /// - Throws:
-    ///    - `BreezeLambdaAPIError.tableNameNotFound` if the DynamoDB table name is not found in the environment variables.
-    ///    - `BreezeLambdaAPIError.keyNameNotFound` if the DynamoDB key name is not found in the environment variables.
+    /// Gets the configuration from the process environment.
     ///
-    /// This method retrieves the AWS region, DynamoDB table name, key name, and optional endpoint from the environment variables.
+    /// - Throws:
+    ///   - `BreezeLambdaAPIError.tableNameNotFound` if the DynamoDB table name is not found in the environment variables.
+    ///   - `BreezeLambdaAPIError.keyNameNotFound` if the DynamoDB key name is not found in the environment variables.
+    /// - Returns: A `BreezeDynamoDBConfig` instance containing the configuration for the Breeze DynamoDB service.
+    /// This method is used to retrieve the necessary configuration for the Breeze Lambda API to interact with DynamoDB.
+    /// It includes the AWS region, DynamoDB table name, key name, and an optional endpoint for LocalStack.
+    /// - Important: The configuration is essential for the Breeze Lambda API to function correctly with DynamoDB. This method retrieves the configuration from environment variables:
+    ///   - `AWS_REGION`: The AWS region where the DynamoDB table is located.
+    ///   - `DYNAMO_DB_TABLE_NAME`: The name of the DynamoDB table.
+    ///   - `DYNAMO_DB_KEY`: The name of the primary key in the DynamoDB table.
     public func getConfig() throws -> BreezeDynamoDBConfig {
         BreezeDynamoDBConfig(
             region: currentRegion(),

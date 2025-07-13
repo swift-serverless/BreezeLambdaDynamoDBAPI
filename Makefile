@@ -49,6 +49,12 @@ generate_docc:
     	--hosting-base-path "https://swift-serverless.github.io/BreezeLambdaDynamoDBAPI/BreezeDynamoDBService/" \
     	--output-path docs/BreezeDynamoDBService
 
+preview_docc_lambda_api:
+	swift package --disable-sandbox preview-documentation --target BreezeLambdaAPI
+
+preview_docc_dynamo_db_service:
+	swift package --disable-sandbox preview-documentation --target BreezeDynamoDBService
+
 coverage:
 	llvm-cov export $(TEST_PACKAGE) \
 		--instr-profile=$(SWIFT_BIN_PATH)/codecov/default.profdata \

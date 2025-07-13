@@ -14,8 +14,9 @@
 
 import SotoCore
 
-/// BreezeDynamoDBConfig is a configuration structure for Breeze DynamoDB service.
-/// It contains the necessary parameters to connect to a DynamoDB instance, including the region, table name, key name, and an optional endpoint.
+/// Configuration structure for Breeze DynamoDB service.
+///
+/// BreezeDynamoDBConfig contains the necessary parameters to connect to a DynamoDB instance, including the region, table name, key name, and an optional endpoint.
 public struct BreezeDynamoDBConfig: Sendable {
     
     /// Initializes a new instance of BreezeDynamoDBConfig.

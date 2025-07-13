@@ -12,7 +12,7 @@
 Add the dependency `BreezeLambdaDynamoDBAPI` to a package:
 
 ```swift
-// swift-tools-version:5.7
+// swift-tools-version:6.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription

@@ -19,6 +19,7 @@ import Foundation
 #endif
 
 /// Model representing a paginated list response from a DynamoDB operation.
+///
 /// This struct contains an array of items and an optional last evaluated key for pagination.
 /// This struct conforms to `CodableSendable`, allowing it to be encoded and decoded for network transmission or storage.
 public struct ListResponse<Item: CodableSendable>: CodableSendable {

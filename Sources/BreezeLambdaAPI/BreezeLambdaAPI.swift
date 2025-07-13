@@ -17,9 +17,26 @@ import ServiceLifecycle
 import BreezeDynamoDBService
 import AWSLambdaRuntime
 
-/// BreezeLambdaAPI is a service that integrates with AWS Lambda to provide a Breeze API for DynamoDB operations.
-/// It supports operations such as create, read, update, delete, and list items in a DynamoDB table using a BreezeCodable.
-/// This Service is designed to work with ServiceLifecycle, allowing it to be run and stopped gracefully.
+/// Actor implementing a service which transforms API Gateway events containing BreezeCodable items into DynamoDB operations.
+///
+/// `BreezeLambdaAPI<T>` acts as a bridge between AWS API Gateway and DynamoDB, handling the conversion
+/// of incoming requests to the appropriate database operations. The generic parameter `T` represents
+/// the data model type that conforms to `BreezeCodable`, ensuring type-safe operations.
+///
+/// It supports standard CRUD operations:
+/// - Create: Insert new items into the DynamoDB table
+/// - Read: Retrieve items by their identifier
+/// - Update: Modify existing items in the table
+/// - Delete: Remove items from the table
+/// - List: Query and retrieve multiple items matching specific criteria
+///
+/// This service leverages the `ServiceLifecycle` package to manage its lifecycle, providing
+/// graceful shutdown mechanism. It internally manages a `ServiceGroup` containing
+/// a `BreezeLambdaService` and a `BreezeDynamoDBService`, which handle the actual processing
+/// of requests and database operations.
+///
+/// The service is designed to be efficient and scalable for AWS Lambda environments, with configurable
+/// timeout settings and comprehensive logging for monitoring and debugging.
 public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     
     let logger = Logger(label: "service-group-breeze-lambda-api")
@@ -67,8 +84,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
         }
     }
     
-    /// Runs the BreezeLambdaAPI service.
-    /// This method starts the internal ServiceGroup and begins processing requests.
+    /// Starts the internal ServiceGroup and begins processing requests.
     /// - Throws: An error if the service fails to start or if an issue occurs during execution.
     ///
     /// The internal ServiceGroup will handle the lifecycle of the BreezeLambdaAPI, including starting and stopping the service gracefully.

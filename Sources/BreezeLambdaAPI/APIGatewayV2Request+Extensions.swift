@@ -16,11 +16,11 @@ import struct AWSLambdaEvents.APIGatewayV2Request
 import class Foundation.JSONDecoder
 
 extension APIGatewayV2Request {
-    /// queryStringParameter
-    /// - Parameter param: Query string parameter
+    /// Attempt to convert the query string parameter to an Integer value.
+    /// - Parameter key: The `key` of the query string parameter.
     /// - Returns: Query string Int value for parameter param if exists
-    public func queryStringParameter(_ param: String) -> Int? {
-        guard let value = queryStringParameters?[param] else {
+    public func queryStringParameterToInt(_ key: String) -> Int? {
+        guard let value = queryStringParameters?[key] else {
             return nil
         }
         return Int(value)
