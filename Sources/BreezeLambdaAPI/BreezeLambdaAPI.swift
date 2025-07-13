@@ -18,7 +18,9 @@ import BreezeDynamoDBService
 import AWSLambdaRuntime
 
 /// BreezeLambdaAPI is a service that integrates with AWS Lambda to provide a Breeze API for DynamoDB operations.
+///
 /// It supports operations such as create, read, update, delete, and list items in a DynamoDB table using a BreezeCodable.
+///
 /// This Service is designed to work with ServiceLifecycle, allowing it to be run and stopped gracefully.
 public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     

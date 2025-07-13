@@ -26,10 +26,14 @@ import Foundation
 #endif
 
 /// BreezeLambdaService is an actor that provides a service for handling AWS Lambda events using BreezeCodable models.
+///
 /// It conforms to the `Service` protocol and implements the `handler` method to process incoming events.
+///
 /// It manages the lifecycle of a BreezeLambdaHandler, which is responsible for handling the actual business logic.
+///
 /// It also provides a method to run the service and handle graceful shutdowns.
-/// it operates on a BreezeCodable model type `T` that conforms to the BreezeCodable protocol.
+///
+/// It operates on a BreezeCodable model type `T` that conforms to the BreezeCodable protocol.
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
     /// DynamoDBService is an instance of BreezeDynamoDBServing that provides access to the DynamoDB database manager.

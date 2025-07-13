@@ -1,13 +1,47 @@
-# BreezeLambdaAPI
+# ``BreezeLambdaAPI``
 
 @Metadata { 
    @PageImage(purpose: icon, source: "Icon")
    @PageImage(purpose: card, source: "Icon")
 }
 
-## Essentials
+## Overview
 
-Add the dependency `BreezeLambdaDynamoDBAPI` to a package:
+The BreezeLambdaAPI implements a Lambda which processes events from AWS API Gateway and performs CRUD operations on AWS DynamoDB, allowing you to build serverless applications with ease.
+
+### Key Features
+
+- Serverless Architecture: Runs on AWS Lambda with API Gateway integration
+- DynamoDB Integration: Seamless CRUD operations with DynamoDB
+- Optimistic Concurrency Control: Ensures data integrity during updates and deletes
+- Type Safety: Leverages Swift's type system with Codable support
+- Swift Concurrency: Fully compatible with Swift's async/await model
+- Service Lifecycle: Handles graceful shutdown and initialization of services
+- Minimal Boilerplate: Focus on your business logic, not infrastructure code
+
+### API Operations
+
+- **Create**: Add new items to DynamoDB with automatic timestamp handling
+- **Read**: Retrieve items using a unique key
+- **Update**: Modify existing items with optimistic concurrency control
+- **Delete**: Remove items with concurrency checks
+- **List**: Retrieve all items with optional pagination
+
+### The BreezeCodable Protocol
+
+Your data models must conform to the `BreezeCodable` protocol, which extends `Codable` and provides additional properties for managing timestamps and keys.
+
+```swift
+public protocol BreezeCodable: Codable, Sendable {
+    var key: String { get set }
+    var createdAt: String? { get set }
+    var updatedAt: String? { get set }
+}
+```
+
+## Getting Started
+
+### Add the dependency
 
 ```swift
 // swift-tools-version:6.1
@@ -38,7 +72,9 @@ let package = Package(
 )
 ```
 
-Add a `Codable` `struct` entity conformed to the `BreezeCodable` protocol:
+### Define Your Data Model
+
+Create a `Codable` struct that conforms to the `BreezeCodable` protocol. This struct will represent the items you want to store in DynamoDB.
 
 ```swift
 import Foundation
@@ -64,7 +100,13 @@ struct Item: Codable {
 extension Item: BreezeCodable { }
 ```
 
-Add the implementation of the Lambda to the file `BreezeLambdaItemAPI.swift`
+### Implement the Lambda Handler
+
+Create a file named `main.swift` and implement the Lambda handler using the `BreezeLambdaAPI` class.
+
+This simple runner will handle the CRUD operations for your `Item` model.
+
+Once compiled, this will be your Lambda function and must be deployed to AWS Lambda.
 
 ```swift
 @main
@@ -79,9 +121,23 @@ struct BreezeLambdaItemAPI {
 }
 ```
 
+### Configure the Lambda
+
+To configure the Lambda function, you need to set up the following environment variables:
+- `_HANDLER`: The handler for the Lambda function, in the format `module.operation`.
+- `AWS_REGION`: The AWS region where the DynamoDB table is located.
+- `DYNAMO_DB_TABLE_NAME`: The name of the DynamoDB table.
+- `DYNAMO_DB_KEY`: The name of the primary key in the DynamoDB table.
+
 ## Deployment
 
-Refer to the main project https://github.com/swift-serverless/Breeze for more info on how to deploy it on AWS.
+Deploy your Lambda function using AWS CDK, SAM, Serverless or Terraform. The Lambda requires:
+
+1. API Gateway integration for HTTP requests
+2. DynamoDB table with appropriate permissions
+3. Environment variables for configuration
+
+For step-by-step deployment instructions and templates, see the [Breeze project repository](https://github.com/swift-serverless/Breeze) for more info on how to deploy it on AWS.
 
 
 

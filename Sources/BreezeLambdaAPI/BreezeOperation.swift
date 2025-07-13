@@ -13,6 +13,7 @@
 //    limitations under the License.
 
 /// BreezeOperation is an enumeration that defines the operations supported by Breeze Lambda API.
+///
 ///  It includes operations such as create, read, update, delete, and list.
 public enum BreezeOperation: String, Sendable {
     case create

@@ -32,7 +32,7 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     /// - Returns: A `BreezeOperation` instance initialized with the handler.
     ///
     /// This method is used to determine the operation that will be executed by the Breeze Lambda API.
-    /// It expects the `_HANDLER` environment variable to be set, which should contain the handler in the format `module.function`.
+    /// It expects the `_HANDLER` environment variable to be set, which should contain the handler in the format `module.operation`.
     ///  See BreezeOperation for more details.
     public func operation() throws -> BreezeOperation {
         guard let handler = Lambda.env("_HANDLER"),
