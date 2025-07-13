@@ -17,7 +17,7 @@ import class Foundation.JSONDecoder
 
 extension APIGatewayV2Request {
     /// Attempt to convert the query string parameter to an Integer value.
-    /// - Parameter Key: The key of the query string parameter.
+    /// - Parameter key: The `key` of the query string parameter.
     /// - Returns: Query string Int value for parameter param if exists
     public func queryStringParameterToInt(_ key: String) -> Int? {
         guard let value = queryStringParameters?[key] else {

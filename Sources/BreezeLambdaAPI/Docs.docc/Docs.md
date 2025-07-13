@@ -1,13 +1,14 @@
 # ``BreezeLambdaAPI``
 
 @Metadata { 
-   @PageImage(purpose: icon, source: "Icon")
-   @PageImage(purpose: card, source: "Icon")
+   @PageImage(purpose: icon, source: "wind")
 }
 
 ## Overview
 
 The BreezeLambdaAPI implements a Lambda which processes events from AWS API Gateway and performs CRUD operations on AWS DynamoDB, allowing you to build serverless applications with ease.
+
+![BreezeLambdaAPI Diagram](api)
 
 ### Key Features
 
