@@ -1,0 +1,10 @@
+{
+  "theme": {
+    "color": {
+      "header": "#DE5E44",
+      "documentation-intro-title": "#DE5E44",
+      "documentation-intro-figure": "#DE5E44",
+      "documentation-intro-accent": "var(--color-header)"
+    }
+  }
+}

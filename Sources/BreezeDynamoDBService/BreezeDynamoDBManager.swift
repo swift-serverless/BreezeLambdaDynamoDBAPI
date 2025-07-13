@@ -16,10 +16,12 @@ import struct Foundation.Date
 import NIO
 import SotoDynamoDB
 
-/// BreezeDynamoDBManager is a manager for handling DynamoDB operations in Breeze.
-/// It provides methods to create, read, update, delete, and list items in a DynamoDB table.
+/// Manager for handling DynamoDB operations in Breeze.
+///
+/// BreezeDynamoDBManager provides methods to create, read, update, delete, and list items in a DynamoDB table.
+///
 /// It conforms to the BreezeDynamoDBManaging protocol, which defines the necessary operations for Breeze's DynamoDB integration.
-/// - Note: This manager requires a DynamoDB instance, a table name, and a key name to operate.
+/// - Note: BreezeDynamoDBManager requires a DynamoDB instance, a table name, and a key name to operate.
 /// It uses the SotoDynamoDB library to interact with AWS DynamoDB services.
 public struct BreezeDynamoDBManager: BreezeDynamoDBManaging {
     

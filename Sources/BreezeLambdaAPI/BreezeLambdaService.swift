@@ -25,36 +25,52 @@ import FoundationEssentials
 import Foundation
 #endif
 
-/// BreezeLambdaService is an actor that provides a service for handling AWS Lambda events using BreezeCodable models.
+/// Service for processing AWS API Gateway events with BreezeCodable models.
 ///
-/// It conforms to the `Service` protocol and implements the `handler` method to process incoming events.
+/// `BreezeLambdaService<T>` is a key component in the serverless architecture that:
+/// - Acts as a bridge between AWS Lambda runtime and DynamoDB operations
+/// - Processes incoming API Gateway events through a type-safe interface
+/// - Manages the lifecycle of AWS Lambda handlers for BreezeCodable models
+/// - Coordinates graceful shutdown procedures to ensure clean resource release
 ///
-/// It manages the lifecycle of a BreezeLambdaHandler, which is responsible for handling the actual business logic.
+/// The service leverages Swift concurrency features through the actor model to ensure
+/// thread-safe access to shared resources while processing multiple Lambda invocations.
+/// It delegates the actual processing of events to a specialized `BreezeLambdaHandler`
+/// which performs the database operations via the injected `BreezeDynamoDBService`.
 ///
-/// It also provides a method to run the service and handle graceful shutdowns.
-///
-/// It operates on a BreezeCodable model type `T` that conforms to the BreezeCodable protocol.
+/// This service is designed to be initialized and run as part of a `ServiceGroup`
+/// within the AWS Lambda execution environment.
 actor BreezeLambdaService<T: BreezeCodable>: Service {
     
-    /// DynamoDBService is an instance of BreezeDynamoDBServing that provides access to the DynamoDB database manager.
+    /// Database service that provides access to the underlying DynamoDB operations.
+    ///
+    /// This service is responsible for all database interactions and connection management.
     let dynamoDBService: BreezeDynamoDBServing
-    /// Operation is an instance of BreezeOperation that defines the operation to be performed by the BreezeLambdaHandler.
+    
+    /// Operation type that determines the behavior of this service instance.
+    ///
+    /// Defines whether this Lambda will perform create, read, update, delete, or list operation
     let operation: BreezeOperation
-    /// Logger is an instance of Logger for logging messages during the service's operation.
+    
+    /// Logger instance for tracking service lifecycle events and errors.
+    ///
+    /// Used throughout the service to provide consistent logging patterns.
     let logger: Logger
     
     /// Initializes a new instance of `BreezeLambdaService`.
     /// - Parameters:
-    ///   - dynamoDBService: An instance of `BreezeDynamoDBServing` that provides access to the DynamoDB database manager.
-    ///   - operation: The `BreezeOperation` that defines the operation to be performed by the BreezeLambdaHandler.
-    ///   - logger: A `Logger` instance for logging messages during the service's operation.
+    ///   - dynamoDBService: Service providing DynamoDB operations and connection management
+    ///   - operation: The specific CRUD operation this Lambda instance will perform
+    ///   - logger: Logger instance for service monitoring and debugging
     init(dynamoDBService: BreezeDynamoDBServing, operation: BreezeOperation, logger: Logger) {
         self.dynamoDBService = dynamoDBService
         self.operation = operation
         self.logger = logger
     }
     
-    /// BreezeLambdaHandler is an optional instance of BreezeLambdaHandler that will handle the actual business logic.
+    /// Handler instance that processes business logic for the configured operation.
+    ///
+    /// Lazily initialized during the `run()` method to ensure proper service startup sequence.
     var breezeApi: BreezeLambdaHandler<T>?
     
     /// Handler method that processes incoming AWS Lambda events.
@@ -63,7 +79,8 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
         return try await breezeApi.handle(event, context: context)
     }
     
-    /// Runs the BreezeLambdaService, initializing the BreezeLambdaHandler and starting the Lambda runtime.
+    /// Runs the service allowing graceful shutdown.
+    ///
     /// - Throws: An error if the service fails to initialize or run.
     func run() async throws {
         let dbManager = await dynamoDBService.dbManager()
@@ -86,6 +103,7 @@ actor BreezeLambdaService<T: BreezeCodable>: Service {
     }
     
     /// Runs a task with cancellation on graceful shutdown.
+    ///
     /// - Note: It's required to allow a full process shutdown without leaving tasks hanging.
     private func runTaskWithCancellationOnGracefulShutdown(
         operation: @escaping @Sendable () async throws -> Void,

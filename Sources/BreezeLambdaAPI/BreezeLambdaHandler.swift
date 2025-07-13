@@ -17,10 +17,12 @@ import AWSLambdaRuntime
 import BreezeDynamoDBService
 import Logging
 
-/// BreezeLambdaHandler implements a Lambda handler for Breeze operations.
-/// It conforms to the `LambdaHandler` protocol and is generic over a type `T` that conforms to `BreezeCodable`.
+/// Lambda handler implementing the followig operations: create, read, update, delete, and list.
 ///
-/// This handler supports the following operations:
+/// Conforms to the `LambdaHandler` protocol and is generic over a type `T` that conforms to `BreezeCodable`.
+/// Implements the logic for handling Breeze operations on a DynamoDB table by utilizing a `BreezeDynamoDBManaging` instance.
+///
+/// The handler supports the following operations:
 ///
 /// - Create: Creates a new item in the DynamoDB table.
 /// - Read: Reads an item from the DynamoDB table based on the provided key.
@@ -128,7 +130,7 @@ struct BreezeLambdaHandler<T: BreezeCodable>: LambdaHandler, Sendable {
     func listLambdaHandler(context: LambdaContext, event: APIGatewayV2Request) async -> APIGatewayV2Response {
         do {
             let key = event.queryStringParameters?["exclusiveStartKey"]
-            let limit: Int? = event.queryStringParameter("limit")
+            let limit: Int? = event.queryStringParameterToInt("limit")
             let result: ListResponse<T> = try await dbManager.listItems(key: key, limit: limit)
             return APIGatewayV2Response(with: result, statusCode: .ok)
         } catch {

@@ -17,16 +17,15 @@ import AsyncHTTPClient
 import ServiceLifecycle
 import Logging
 
-/// BreezeDynamoDBServing
-/// A protocol that defines the interface for a Breeze DynamoDB service.
-/// It provides methods to access the database manager and to gracefully shutdown the service.
+/// Defines the interface for a Breeze DynamoDB service.
+/// 
+/// Provides methods to access the database manager and to gracefully shutdown the service.
 public protocol BreezeDynamoDBServing: Actor {
     func dbManager() async -> BreezeDynamoDBManaging
     func gracefulShutdown() throws
 }
 
-/// BreezeDynamoDBService is an actor that conforms to the BreezeDynamoDBServing protocol.
-/// It provides methods to access the DynamoDB database manager and to gracefully shutdown the service.
+/// Provides methods to access the DynamoDB database manager and to gracefully shutdown the service.
 public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     
     private let dbManager: BreezeDynamoDBManaging
@@ -84,6 +83,7 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     }
     
     /// Gracefully shutdown the service and its components.
+    ///
     /// - Throws: An error if the shutdown process fails.
     /// This method ensures that the AWS client and HTTP client are properly shutdown before marking the service as shutdown.
     /// It also logs the shutdown process.

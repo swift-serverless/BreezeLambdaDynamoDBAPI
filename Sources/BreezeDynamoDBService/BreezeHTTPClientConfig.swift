@@ -15,12 +15,12 @@
 import Logging
 import NIOCore
 
-/// BreezeClientServiceError defines the errors that can occur in the Breeze Client Service.
+/// Defines the errors that can occur in the Breeze Client Service.
 public enum BreezeClientServiceError: Error {
     case invalidHttpClient
 }
 
-/// BreezeHTTPClientConfig is a configuration structure for the Breeze HTTP client.
+/// Configuration structure for the Breeze HTTP client.
 public struct BreezeHTTPClientConfig: Sendable {
     
     /// Initializes a new instance of BreezeHTTPClientConfig.
