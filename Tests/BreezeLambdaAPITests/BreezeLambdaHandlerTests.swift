@@ -336,7 +336,7 @@ final actor MockLambdaResponseStreamWriter: LambdaResponseStreamWriter {
         self.buffer = buffer
     }
 
-    func write(_ buffer: ByteBuffer) async throws {
+    func write(_ buffer: ByteBuffer, hasCustomHeaders: Bool) async throws {
         fatalError("Unexpected call")
     }
 
