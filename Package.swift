@@ -26,8 +26,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        // TODO: change to upstream once the upstream is tagged
-        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", branch: "main"),
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", from: "2.0.0-beta.2"),
         .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", from: "0.5.0"),
         .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
