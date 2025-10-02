@@ -23,16 +23,19 @@ struct BreezeDynamoDBServiceTests {
     @Test
     func testInitPrepareBreezeDynamoDBManager() async throws {
         let sut = await makeBreezeDynamoDBConfig()
-        let manager = await sut.dbManager()
+        let manager =
+sut.dbManager
         #expect(manager is BreezeDynamoDBManager, "Expected BreezeDynamoDBManager instance")
-        try await sut.gracefulShutdown()
+        try await sut.onGracefulShutdown()
     }
     
     @Test
     func testGracefulShutdownCanBeCalledMultipleTimes() async throws {
         let sut = await makeBreezeDynamoDBConfig()
-        try await sut.gracefulShutdown()
-        try await sut.gracefulShutdown()
+        try await sut.onGracefulShutdown()
+        await #expect(throws: Error.self) {
+            try await sut.onGracefulShutdown()
+        }
     }
     
     @Test
@@ -44,15 +47,15 @@ struct BreezeDynamoDBServiceTests {
         )
         let logger = Logger(label: "BreezeDynamoDBServiceTests")
         let httpConfig = BreezeHTTPClientConfig(timeout: .seconds(10), logger: logger)
-        let sut = await BreezeDynamoDBService(
+        let sut = BreezeDynamoDBService(
             config: config,
             httpConfig: httpConfig,
             logger: logger,
             DBManagingType: BreezeDynamoDBManagerMock.self
         )
-        let manager = await sut.dbManager()
+        let manager = sut.dbManager
         #expect(manager is BreezeDynamoDBManagerMock, "Expected BreezeDynamoDBManager instance")
-        try await sut.gracefulShutdown()
+        try await sut.onGracefulShutdown()
     }
     
     private func makeBreezeDynamoDBConfig() async -> BreezeDynamoDBService {
@@ -63,7 +66,7 @@ struct BreezeDynamoDBServiceTests {
         )
         let logger = Logger(label: "BreezeDynamoDBServiceTests")
         let httpConfig = BreezeHTTPClientConfig(timeout: .seconds(10), logger: logger)
-        return await BreezeDynamoDBService(
+        return BreezeDynamoDBService(
             config: config,
             httpConfig: httpConfig,
             logger: logger,
