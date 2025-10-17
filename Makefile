@@ -25,7 +25,7 @@ local_setup_dynamo_db:
 		--table-name Breeze \
 		--attribute-definitions AttributeName=itemKey,AttributeType=S \
 		--key-schema AttributeName=itemKey,KeyType=HASH \
-		--billing-mode PAY_PER_REQUEST
+		--billing-mode PAY_PER_REQUEST \
 		--region us-east-1
 
 local_invoke_demo_app:
