@@ -30,54 +30,58 @@ struct APIConfiguration: APIConfiguring {
     }
 }
 
-@Suite
+@Suite(.serialized)
 struct BreezeLambdaAPITests {
     
     let logger = Logger(label: "BreezeHTTPClientServiceTests")
     
     @Test
     func test_breezeLambdaAPI_whenValidEnvironment() async throws {
+        do {
         try await testGracefulShutdown { gracefulShutdownTestTrigger in
-            
             let (gracefulStream, continuation) = AsyncStream<Void>.makeStream()
-            
             try await withThrowingTaskGroup(of: Void.self) { group in
                 let sut = try await BreezeLambdaAPI<Product>(apiConfig: APIConfiguration())
+                group.addTask {
+                    try await withGracefulShutdownHandler{
+                        try await sut.run()
+                    } onGracefulShutdown: {
+                        logger.info("On Graceful Shutdown")
+                        continuation.yield()
+                    }
+                }
                 group.addTask {
                     try await Task.sleep(nanoseconds: 1_000_000_000)
                     gracefulShutdownTestTrigger.triggerGracefulShutdown()
                 }
-                group.addTask {
-                    try await withGracefulShutdownHandler {
-                        do {
-                            try await sut.run()
-                            print("BreezeLambdaAPIService started successfully")
-                        } catch {
-                            
-                        }
-                    } onGracefulShutdown: {
-                        logger.info("On Graceful Shutdown")
-                        continuation.yield()
-                        continuation.finish()
-                    }
-                }
                 for await _ in gracefulStream {
+                    continuation.finish()
                     logger.info("Graceful shutdown stream received")
                     group.cancelAll()
                 }
             }
+        }
+        } catch {
+            logger.error("Error during test: \(error)")
+            throw error
         }
     }
     
     @Test
     func test_breezeLambdaAPI_whenInvalidEnvironment() async throws {
         await #expect(throws: BreezeLambdaAPIError.self) {
+            let (errorStream, continuation) = AsyncStream<Error>.makeStream()
             try await testGracefulShutdown { gracefulShutdownTestTrigger in
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     let sut = try await BreezeLambdaAPI<Product>()
                     group.addTask {
                         try await withGracefulShutdownHandler {
-                            try await sut.run()
+                            do {
+                                try await sut.run()
+                            } catch {
+                                continuation.yield(error)
+                                continuation.finish()
+                            }
                         } onGracefulShutdown: {
                             logger.info("Performing onGracefulShutdown")
                         }
@@ -86,7 +90,10 @@ struct BreezeLambdaAPITests {
                         try await Task.sleep(nanoseconds: 1_000_000_000)
                         gracefulShutdownTestTrigger.triggerGracefulShutdown()
                     }
-                    group.cancelAll()
+                    for await _ in errorStream {
+                        logger.info("Error stream received")
+                        group.cancelAll()
+                    }
                 }
             }
         }
