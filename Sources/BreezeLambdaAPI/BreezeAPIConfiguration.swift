@@ -104,10 +104,10 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     /// This method is used to retrieve the name of the primary key in the DynamoDB table that will be used by the Breeze Lambda API.
     /// - Important: The key name is essential for identifying items in the DynamoDB table.
     func keyName() throws -> String {
-        guard let tableName = Lambda.env("DYNAMO_DB_KEY") else {
+        guard let keyName = Lambda.env("DYNAMO_DB_KEY") else {
             throw BreezeLambdaAPIError.keyNameNotFound
         }
-        return tableName
+        return keyName
     }
     
     /// Returns the endpoint for the Breeze Lambda API.

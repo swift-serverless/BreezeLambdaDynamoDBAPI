@@ -33,7 +33,6 @@ public struct BreezeDynamoDBService: BreezeDynamoDBServing {
     private let logger: Logger
     private let awsClient: AWSClient
     private let httpClient: HTTPClient
-    private var isShutdown = false
     
     /// Initializes the BreezeDynamoDBService with the provided configuration.
     /// - Parameters:

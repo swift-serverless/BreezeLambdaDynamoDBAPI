@@ -94,6 +94,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
             try await serviceGroup.run()
         } catch {
             try dynamoDBService.syncShutdown()
+            logger.error("BreezeLambdaAPI failed with error: \(error.localizedDescription)")
             throw error
         }
         logger.info("BreezeLambdaAPI is stopped successfully")
