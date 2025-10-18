@@ -21,7 +21,7 @@ localstack:
 	docker run -it --rm -p "4566:4566" localstack/localstack
 
 local_setup_dynamo_db:
-	aws --endpoint-url=http://localhost:4566 dynamodb create-table \
+	aws --endpoint-url=http://localstack:4566 dynamodb create-table \
 		--table-name Breeze \
 		--attribute-definitions AttributeName=itemKey,AttributeType=S \
 		--key-schema AttributeName=itemKey,KeyType=HASH \

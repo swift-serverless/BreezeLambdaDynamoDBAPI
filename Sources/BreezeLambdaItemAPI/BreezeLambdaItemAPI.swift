@@ -54,7 +54,7 @@ struct APIConfiguration: APIConfiguring {
     /// You can change the region, table name, key name, and endpoint as needed for your application.
     /// Remove the endpoint for production use.
     func getConfig() throws -> BreezeDynamoDBConfig {
-        BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "itemKey", endpoint: "http://127.0.0.1:4566")
+        BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "itemKey", endpoint: "http://localstack:4566")
     }
 }
 

@@ -26,7 +26,7 @@ struct APIConfiguration: APIConfiguring {
         .list
     }
     func getConfig() throws -> BreezeDynamoDBConfig {
-        BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "itemKey", endpoint: "http://127.0.0.1:4566")
+        BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "itemKey", endpoint: "http://localstack:4566")
     }
 }
 

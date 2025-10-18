@@ -51,6 +51,9 @@ public struct BreezeDynamoDBService: BreezeDynamoDBServing {
         logger.info("region: \(config.region)")
         logger.info("tableName: \(config.tableName)")
         logger.info("keyName: \(config.keyName)")
+        if config.endpoint != nil {
+            logger.info("endpoint: \(config.endpoint!)")
+        }
         self.logger = logger
         
         let timeout = HTTPClient.Configuration.Timeout(
