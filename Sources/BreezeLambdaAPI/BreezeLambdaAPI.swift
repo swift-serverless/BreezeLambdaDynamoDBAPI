@@ -87,14 +87,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     ///
     /// The internal ServiceGroup will handle the lifecycle of the BreezeLambdaAPI, including starting and stopping the service gracefully.
     public func run() async throws {
-        logger.info("Starting BreezeLambdaAPI...")
-        do {
-            try await serviceGroup.run()
-        } catch {
-            try dynamoDBService.syncShutdown()
-            logger.error("BreezeLambdaAPI failed with error: \(error.localizedDescription)")
-            throw error
-        }
+        try await serviceGroup.run()
         logger.info("BreezeLambdaAPI is stopped successfully")
     }
 }
