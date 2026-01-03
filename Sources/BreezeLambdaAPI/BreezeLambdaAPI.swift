@@ -87,6 +87,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     ///
     /// The internal ServiceGroup will handle the lifecycle of the BreezeLambdaAPI, including starting and stopping the service gracefully.
     public func run() async throws {
+        logger.info("Starting BreezeLambdaAPI...")
         try await serviceGroup.run()
         logger.info("BreezeLambdaAPI is stopped successfully")
     }
