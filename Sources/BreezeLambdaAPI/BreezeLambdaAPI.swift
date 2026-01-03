@@ -40,7 +40,6 @@ import AWSLambdaRuntime
 public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     
     let logger = Logger(label: "service-group-breeze-lambda-api")
-    let timeout: TimeAmount
     private let serviceGroup: ServiceGroup
     private let apiConfig: any APIConfiguring
     private let dynamoDBService: BreezeDynamoDBService
@@ -57,10 +56,9 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     public init(apiConfig: APIConfiguring = BreezeAPIConfiguration()) async throws {
         do {
             self.apiConfig = apiConfig
-            self.timeout = .seconds(apiConfig.dbTimeout)
             let config = try apiConfig.getConfig()
             let httpConfig = BreezeHTTPClientConfig(
-                timeout: .seconds(60),
+                timeout: .seconds(apiConfig.dbTimeout),
                 logger: logger
             )
             let operation = try apiConfig.operation()

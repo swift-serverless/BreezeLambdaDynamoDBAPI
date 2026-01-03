@@ -33,7 +33,25 @@ public struct BreezeDynamoDBService: BreezeDynamoDBServing {
     private let logger: Logger
     private let awsClient: AWSClient
     private let httpClient: HTTPClient
-    
+    private let shutdownState: ShutdownState
+
+    /// Error types for BreezeDynamoDBService
+    enum BreezeDynamoDBServiceError: Error {
+        case alreadyShutdown
+    }
+
+    /// Actor to manage shutdown state safely
+    private actor ShutdownState {
+        private var isShutdown = false
+        
+        func markShutdown() throws {
+            guard !isShutdown else {
+                throw BreezeDynamoDBServiceError.alreadyShutdown
+            }
+            isShutdown = true
+        }
+    }
+        
     /// Initializes the BreezeDynamoDBService with the provided configuration.
     /// - Parameters:
     ///   - config: The configuration for the DynamoDB service.
@@ -76,6 +94,7 @@ public struct BreezeDynamoDBService: BreezeDynamoDBServing {
             tableName: config.tableName,
             keyName: config.keyName
         )
+        self.shutdownState = ShutdownState()
         logger.info("DBManager is ready.")
     }
     
@@ -89,9 +108,10 @@ public struct BreezeDynamoDBService: BreezeDynamoDBServing {
     /// - Throws: An error if the shutdown process fails.
     /// This method ensures that the AWS client and HTTP client are properly shutdown before marking the service as shutdown.
     /// It also logs the shutdown process.
-    /// This method is idempotent;
-    /// - Important: This method must be called at leat once to ensure that resources are released properly. If the method is not called, it will lead to a crash.
+    /// This method is idempotent and will throw if called multiple times to prevent double shutdown.
+    /// - Important: This method must be called at least once to ensure that resources are released properly. If the method is not called, it will lead to a crash.
     public func onGracefulShutdown() async throws {
+        try await shutdownState.markShutdown()
         logger.info("Stopping DynamoDBService...")
         try await awsClient.shutdown()
         logger.info("DynamoDBService is stopped.")
