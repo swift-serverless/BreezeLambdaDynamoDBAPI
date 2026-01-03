@@ -20,20 +20,38 @@ import Logging
 /// Defines the interface for a Breeze DynamoDB service.
 /// 
 /// Provides methods to access the database manager and to gracefully shutdown the service.
-public protocol BreezeDynamoDBServing: Actor {
-    func dbManager() async -> BreezeDynamoDBManaging
-    func gracefulShutdown() throws
+public protocol BreezeDynamoDBServing: Service {
+    var dbManager: BreezeDynamoDBManaging { get }
+    func onGracefulShutdown() async throws
+    func syncShutdown() throws
 }
 
 /// Provides methods to access the DynamoDB database manager and to gracefully shutdown the service.
-public actor BreezeDynamoDBService: BreezeDynamoDBServing {
+public struct BreezeDynamoDBService: BreezeDynamoDBServing {
     
-    private let dbManager: BreezeDynamoDBManaging
+    public let dbManager: BreezeDynamoDBManaging
     private let logger: Logger
     private let awsClient: AWSClient
     private let httpClient: HTTPClient
-    private var isShutdown = false
-    
+    private let shutdownState: ShutdownState
+
+    /// Error types for BreezeDynamoDBService
+    enum BreezeDynamoDBServiceError: Error {
+        case alreadyShutdown
+    }
+
+    /// Actor to manage shutdown state safely
+    private actor ShutdownState {
+        private var isShutdown = false
+        
+        func markShutdown() throws {
+            guard !isShutdown else {
+                throw BreezeDynamoDBServiceError.alreadyShutdown
+            }
+            isShutdown = true
+        }
+    }
+        
     /// Initializes the BreezeDynamoDBService with the provided configuration.
     /// - Parameters:
     ///   - config: The configuration for the DynamoDB service.
@@ -46,11 +64,14 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
         httpConfig: BreezeHTTPClientConfig,
         logger: Logger,
         DBManagingType: BreezeDynamoDBManaging.Type = BreezeDynamoDBManager.self
-    ) async {
+    ) {
         logger.info("Init DynamoDBService with config...")
         logger.info("region: \(config.region)")
         logger.info("tableName: \(config.tableName)")
         logger.info("keyName: \(config.keyName)")
+        if config.endpoint != nil {
+            logger.info("endpoint: \(config.endpoint!)")
+        }
         self.logger = logger
         
         let timeout = HTTPClient.Configuration.Timeout(
@@ -73,13 +94,13 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
             tableName: config.tableName,
             keyName: config.keyName
         )
+        self.shutdownState = ShutdownState()
         logger.info("DBManager is ready.")
     }
     
-    /// Returns the BreezeDynamoDBManaging instance.
-    public func dbManager() async -> BreezeDynamoDBManaging {
-        logger.info("Starting DynamoDBService...")
-        return self.dbManager
+    public func run() async throws {
+        try await gracefulShutdown()
+        try await onGracefulShutdown()
     }
     
     /// Gracefully shutdown the service and its components.
@@ -87,23 +108,22 @@ public actor BreezeDynamoDBService: BreezeDynamoDBServing {
     /// - Throws: An error if the shutdown process fails.
     /// This method ensures that the AWS client and HTTP client are properly shutdown before marking the service as shutdown.
     /// It also logs the shutdown process.
-    /// This method is idempotent;
-    /// - Important: This method must be called at leat once to ensure that resources are released properly. If the method is not called, it will lead to a crash.
-    public func gracefulShutdown() throws {
-        guard !isShutdown else { return }
-        isShutdown = true
+    /// This method is idempotent and will throw if called multiple times to prevent double shutdown.
+    /// - Important: This method must be called at least once to ensure that resources are released properly. If the method is not called, it will lead to a crash.
+    public func onGracefulShutdown() async throws {
+        try await shutdownState.markShutdown()
         logger.info("Stopping DynamoDBService...")
-        try awsClient.syncShutdown()
+        try await awsClient.shutdown()
         logger.info("DynamoDBService is stopped.")
         logger.info("Stopping HTTPClient...")
-        try httpClient.syncShutdown()
+        try await httpClient.shutdown()
         logger.info("HTTPClient is stopped.")
     }
     
-    deinit {
-        guard !isShutdown else { return }
-        try? awsClient.syncShutdown()
-        try? httpClient.syncShutdown()
+    /// Sync shutdown
+    public func syncShutdown() throws {
+        try awsClient.syncShutdown()
+        try httpClient.syncShutdown()
     }
 }
 

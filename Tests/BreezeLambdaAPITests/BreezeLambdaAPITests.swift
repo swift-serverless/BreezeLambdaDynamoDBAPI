@@ -18,46 +18,41 @@ import Testing
 import ServiceLifecycle
 import ServiceLifecycleTestKit
 import BreezeDynamoDBService
+import Foundation
+import AsyncHTTPClient
 
 struct APIConfiguration: APIConfiguring {
-    var dbTimeout: Int64 = 30
+    var dbTimeout: Int64 = 1
     
     func operation() throws -> BreezeOperation {
         .list
     }
     func getConfig() throws -> BreezeDynamoDBConfig {
-        BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "itemKey", endpoint: "http://127.0.0.1:4566")
+        BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "itemKey", endpoint: "http://localstack:4566")
     }
 }
 
-@Suite
-struct BreezeLambdaAPIServiceTests {
+@Suite(.serialized)
+struct BreezeLambdaAPITests {
     
     let logger = Logger(label: "BreezeHTTPClientServiceTests")
-    
+
     @Test
-    func test_breezeLambdaAPIService_whenValidEnvironment() async throws {
-        try await testGracefulShutdown { gracefulShutdownTestTrigger in
-            
+    func test_breezeLambdaAPI_whenValidEnvironment() async throws {
+        await testGracefulShutdown { gracefulShutdownTestTrigger in
             let (gracefulStream, continuation) = AsyncStream<Void>.makeStream()
-            
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                let sut = try await BreezeLambdaAPI<Product>(apiConfig: APIConfiguration())
+            await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask {
+                    let sut = try await BreezeLambdaAPI<Product>(apiConfig: APIConfiguration())
+                    try await sut.run()
+                    continuation.yield()
+                }
                 group.addTask {
                     try await Task.sleep(nanoseconds: 1_000_000_000)
                     gracefulShutdownTestTrigger.triggerGracefulShutdown()
                 }
-                group.addTask {
-                    try await withGracefulShutdownHandler {
-                        try await sut.run()
-                        print("BreezeLambdaAPIService started successfully")
-                    } onGracefulShutdown: {
-                        logger.info("On Graceful Shutdown")
-                        continuation.yield()
-                        continuation.finish()
-                    }
-                }
                 for await _ in gracefulStream {
+                    continuation.finish()
                     logger.info("Graceful shutdown stream received")
                     group.cancelAll()
                 }
@@ -66,23 +61,25 @@ struct BreezeLambdaAPIServiceTests {
     }
     
     @Test
-    func test_breezeLambdaAPIService_whenInvalidEnvironment() async throws {
+    func test_breezeLambdaAPI_whenInvalidEnvironment() async throws {
         await #expect(throws: BreezeLambdaAPIError.self) {
+            let (errorStream, continuation) = AsyncStream<Void>.makeStream()
             try await testGracefulShutdown { gracefulShutdownTestTrigger in
+                let sut = try await BreezeLambdaAPI<Product>()
                 try await withThrowingTaskGroup(of: Void.self) { group in
-                    let sut = try await BreezeLambdaAPI<Product>()
                     group.addTask {
-                        try await withGracefulShutdownHandler {
-                            try await sut.run()
-                        } onGracefulShutdown: {
-                            logger.info("Performing onGracefulShutdown")
-                        }
+                        try? await sut.run()
+                        continuation.yield()            
                     }
                     group.addTask {
                         try await Task.sleep(nanoseconds: 1_000_000_000)
                         gracefulShutdownTestTrigger.triggerGracefulShutdown()
                     }
-                    group.cancelAll()
+                    for await _ in errorStream {
+                        continuation.finish()
+                        logger.info("Error stream received")
+                        group.cancelAll()
+                    }
                 }
             }
         }

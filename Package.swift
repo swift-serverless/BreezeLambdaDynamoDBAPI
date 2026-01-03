@@ -26,7 +26,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.2.0"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime", from: "2.5.0"),
         .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "0.5.0"),
         .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),

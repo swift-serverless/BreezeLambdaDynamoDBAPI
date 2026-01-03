@@ -40,9 +40,9 @@ import AWSLambdaRuntime
 public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     
     let logger = Logger(label: "service-group-breeze-lambda-api")
-    let timeout: TimeAmount
     private let serviceGroup: ServiceGroup
     private let apiConfig: any APIConfiguring
+    private let dynamoDBService: BreezeDynamoDBService
     
     /// Initializes the BreezeLambdaAPI with the provided API configuration.
     /// - Parameter apiConfig: An object conforming to `APIConfiguring` that provides the necessary configuration for the Breeze API.
@@ -56,26 +56,24 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
     public init(apiConfig: APIConfiguring = BreezeAPIConfiguration()) async throws {
         do {
             self.apiConfig = apiConfig
-            self.timeout = .seconds(apiConfig.dbTimeout)
             let config = try apiConfig.getConfig()
             let httpConfig = BreezeHTTPClientConfig(
-                timeout: .seconds(60),
+                timeout: .seconds(apiConfig.dbTimeout),
                 logger: logger
             )
             let operation = try apiConfig.operation()
-            let dynamoDBService = await BreezeDynamoDBService(
+            self.dynamoDBService = BreezeDynamoDBService(
                 config: config,
                 httpConfig: httpConfig,
                 logger: logger
             )
-            let breezeLambdaService = BreezeLambdaService<T>(
-                dynamoDBService: dynamoDBService,
-                operation: operation,
-                logger: logger
-            )
+            let dbManager = dynamoDBService.dbManager
+            let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: operation)
+            let runtime = LambdaRuntime(body: breezeApi.handle)
             self.serviceGroup = ServiceGroup(
-                services: [breezeLambdaService],
-                gracefulShutdownSignals: [.sigterm, .sigint],
+                services: [runtime, dynamoDBService],
+                gracefulShutdownSignals: [.sigint],
+                cancellationSignals: [.sigterm],
                 logger: logger
             )
         } catch {
