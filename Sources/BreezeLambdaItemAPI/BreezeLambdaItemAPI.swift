@@ -12,6 +12,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+import Configuration
 import BreezeLambdaAPI
 import BreezeDynamoDBService
 
@@ -39,31 +40,20 @@ struct Item: Codable {
 /// BreezeCodable is a protocol that allows the Item struct to be used with Breeze Lambda API.
 extension Item: BreezeCodable { }
 
-/// APIConfiguration is a struct that conforms to APIConfiguring.
-/// It provides the configuration for the Breeze Lambda API, including the DynamoDB table name, key name, and endpoint.
-/// It also specifies the operation to be performed, which in this case is listing items.
-struct APIConfiguration: APIConfiguring {
-    let dbTimeout: Int64 = 30
-    func operation() throws -> BreezeOperation {
-        .list
-    }
-    
-    /// Get the configuration for the DynamoDB service.
-    /// It specifies the region, table name, key name, and endpoint.
-    /// In this example, it uses a local Localstack endpoint for testing purposes.
-    /// You can change the region, table name, key name, and endpoint as needed for your application.
-    /// Remove the endpoint for production use.
-    func getConfig() throws -> BreezeDynamoDBConfig {
-        BreezeDynamoDBConfig(region: .useast1, tableName: "Breeze", keyName: "itemKey", endpoint: "http://localstack:4566")
-    }
-}
 
 @main
 struct BreezeLambdaItemAPI {
     static func main() async throws {
 #if DEBUG
         do {
-            let lambdaAPIService = try await BreezeLambdaAPI<Item>(apiConfig: APIConfiguration())
+            let config = ConfigReader(
+                providers: [
+                    EnvironmentVariablesProvider(),
+                    try await FileProvider<JSONSnapshot>(filePath: "Sources/BreezeLambdaItemAPI/Resources/breeze-item-config.json")
+                ]
+            )
+            let configuration = BreezeAPIConfiguration(reader: config)
+            let lambdaAPIService = try await BreezeLambdaAPI<Item>(apiConfig: configuration)
             try await lambdaAPIService.run()
         } catch {
             print(error.localizedDescription)

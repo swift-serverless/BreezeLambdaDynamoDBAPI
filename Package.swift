@@ -32,13 +32,16 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.2"),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-configuration", from: "1.0.0")
     ],
     targets: [
         .executableTarget(
             name: "BreezeLambdaItemAPI",
             dependencies: [
-                "BreezeLambdaAPI"
-            ]
+                "BreezeLambdaAPI",
+                .product(name: "Configuration", package: "swift-configuration")
+            ],
+            resources: [.copy("Resources")]
         ),
         .target(
             name: "BreezeDynamoDBService",
@@ -54,6 +57,7 @@ let package = Package(
                 .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
                 .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
+                .product(name: "Configuration", package: "swift-configuration"),
                 "BreezeDynamoDBService"
             ]
         ),
