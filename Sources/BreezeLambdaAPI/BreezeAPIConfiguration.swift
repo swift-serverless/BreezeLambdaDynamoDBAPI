@@ -7,10 +7,10 @@
 
 import SotoDynamoDB
 import BreezeDynamoDBService
-import AWSLambdaRuntime
+import Configuration
 
 /// Defines the configuration for the Breeze Lambda API.
-public protocol APIConfiguring {
+public protocol APIConfiguring: Sendable {
     var dbTimeout: Int64 { get }
     func operation() throws -> BreezeOperation
     func getConfig() throws -> BreezeDynamoDBConfig
@@ -26,11 +26,30 @@ public protocol APIConfiguring {
 /// - `DYNAMO_DB_TABLE_NAME`: The name of the DynamoDB table.
 /// - `DYNAMO_DB_KEY`: The name of the primary key in the DynamoDB table.
 public struct BreezeAPIConfiguration: APIConfiguring {
+    private enum Keys {
+        static let handler: ConfigKey = "_HANDLER"
+        static let awsRegion: ConfigKey = "AWS_REGION"
+        static let tableName: ConfigKey = "DYNAMO_DB_TABLE_NAME"
+        static let keyName: ConfigKey = "DYNAMO_DB_KEY"
+        static let localstackEndpoint: ConfigKey = "LOCALSTACK_ENDPOINT"
+        static let dbTimeout: ConfigKey = "BREEZE_DB_TIMEOUT"
+    }
     
-    public init() {}
+    private let reader: ConfigReader
     
-    /// Timeout for database operations in seconds.
-    public let dbTimeout: Int64 = 30
+    /// Creates the configuration using the supplied providers. Defaults to environment variables.
+    public init(
+        reader: ConfigReader = ConfigReader(
+            providers: [EnvironmentVariablesProvider()]
+        )
+    ) {
+        self.reader = reader
+    }
+    
+    /// Timeout for database operations in seconds, configurable via `BREEZE_DB_TIMEOUT`.
+    public var dbTimeout: Int64 {
+        Int64(reader.int(forKey: Keys.dbTimeout, default: 30))
+    }
     
     /// The operation handler for Breeze operations.
     ///
@@ -43,7 +62,7 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     ///
     ///  See BreezeOperation for more details.
     public func operation() throws -> BreezeOperation {
-        guard let handler = Lambda.env("_HANDLER"),
+        guard let handler = reader.string(forKey: Keys.handler),
               let operation = BreezeOperation(handler: handler)
         else {
             throw BreezeLambdaAPIError.invalidHandler
@@ -78,12 +97,10 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     ///
     /// This method is used to determine the AWS region where the DynamoDB table is located.
     func currentRegion() -> Region {
-        if let awsRegion = Lambda.env("AWS_REGION") {
-            let value = Region(rawValue: awsRegion)
-            return value
-        } else {
-            return .useast1
+        if let awsRegion = reader.string(forKey: Keys.awsRegion) {
+            return Region(rawValue: awsRegion)
         }
+        return .useast1
     }
     
     /// Returns the DynamoDB table name from the `DYNAMO_DB_TABLE_NAME` environment variable.
@@ -92,7 +109,7 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     /// This method is used to retrieve the name of the DynamoDB table that will be used by the Breeze Lambda API.
     /// - Important: The table name is essential for performing operations on the DynamoDB table.
     func tableName() throws -> String {
-        guard let tableName = Lambda.env("DYNAMO_DB_TABLE_NAME") else {
+        guard let tableName = reader.string(forKey: Keys.tableName) else {
             throw BreezeLambdaAPIError.tableNameNotFound
         }
         return tableName
@@ -104,7 +121,7 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     /// This method is used to retrieve the name of the primary key in the DynamoDB table that will be used by the Breeze Lambda API.
     /// - Important: The key name is essential for identifying items in the DynamoDB table.
     func keyName() throws -> String {
-        guard let keyName = Lambda.env("DYNAMO_DB_KEY") else {
+        guard let keyName = reader.string(forKey: Keys.keyName) else {
             throw BreezeLambdaAPIError.keyNameNotFound
         }
         return keyName
@@ -120,7 +137,7 @@ public struct BreezeAPIConfiguration: APIConfiguring {
     ///   - To set it you need to set the `LOCALSTACK_ENDPOINT` environment variable to the URL of your LocalStack instance.
     ///   - The Default LocalStack endpoint is `http://localhost:4566`
     func endpoint() -> String? {
-        if let localstack = Lambda.env("LOCALSTACK_ENDPOINT"),
+        if let localstack = reader.string(forKey: Keys.localstackEndpoint),
            !localstack.isEmpty {
             return localstack
         }

@@ -1,0 +1,8 @@
+{
+  "_HANDLER": "BreezeLambdaItemAPI.create",
+  "AWS_REGION": "us-east-1",
+  "DYNAMO_DB_TABLE_NAME": "Breeze",
+  "DYNAMO_DB_KEY": "itemKey",
+  "LOCALSTACK_ENDPOINT": "http://localstack:4566",
+  "BREEZE_DB_TIMEOUT": 30
+}
