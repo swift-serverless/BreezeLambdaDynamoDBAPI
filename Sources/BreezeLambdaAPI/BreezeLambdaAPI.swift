@@ -71,7 +71,7 @@ public actor BreezeLambdaAPI<T: BreezeCodable>: Service {
             let breezeApi = BreezeLambdaHandler<T>(dbManager: dbManager, operation: operation)
             let runtime = LambdaRuntime(body: breezeApi.handle)
             self.serviceGroup = ServiceGroup(
-                services: [runtime, dynamoDBService],
+                services: [dynamoDBService, runtime],
                 gracefulShutdownSignals: [.sigint],
                 cancellationSignals: [.sigterm],
                 logger: logger

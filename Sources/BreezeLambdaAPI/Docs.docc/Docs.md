@@ -45,7 +45,7 @@ public protocol BreezeCodable: Codable, Sendable {
 ### Add the dependency
 
 ```swift
-// swift-tools-version:6.1
+// swift-tools-version:6.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
