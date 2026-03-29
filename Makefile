@@ -29,7 +29,7 @@ local_setup_dynamo_db:
 		--region us-east-1
 
 local_invoke_demo_app:
-	curl -X POST 127.0.0.1:7000/invoke -H "Content-Type: application/json" -d @Tests/BreezeLambdaAPITests/Fixtures/post_products_api_gtw.json
+	curl -X POST 127.0.0.1:7000/invoke -H "Content-Type: application/json" -d @Sources/BreezeLambdaItemAPI/Resources/post_items_api_gtw.json
 
 test:
 	swift test --sanitize=thread --enable-code-coverage
